@@ -136,13 +136,6 @@
     .section-label h2 { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.35rem; }
     .section-label p { font-size: 0.875rem; color: var(--text2); }
 
-    /* ── Install ── */
-    .install { max-width: 560px; margin: 0 auto; padding: 3rem 2rem 4rem; }
-    .install h2 { font-size: 1.4rem; font-weight: 700; margin-bottom: 1.5rem; letter-spacing: -0.02em; }
-    .step { display: grid; grid-template-columns: 28px 1fr; gap: 12px; margin-bottom: 1rem; align-items: start; }
-    .step-n { width: 28px; height: 28px; border-radius: 50%; background: var(--purple2); color: #fff; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    .step h3 { font-size: 0.875rem; font-weight: 600; margin-bottom: 2px; }
-    .step p { font-size: 0.8rem; color: var(--text2); line-height: 1.5; }
     code { font-family: 'SF Mono', 'Fira Code', monospace; background: rgba(255,255,255,0.07); padding: .1em .35em; border-radius: 3px; font-size: .82em; color: var(--text); }
 
     /* ── Footer ── */
@@ -179,7 +172,7 @@
   <h1>See the <em>network graph</em><br>behind any website</h1>
   <p>A Chrome DevTools panel that maps every request as a live force-directed graph, a geolocated world map, and a filterable table.</p>
   <div class="btns">
-    <a href="#install" class="btn-p">Install free</a>
+    <a href="https://github.com/forge-veil/netphantom" class="btn-p">Get it on GitHub</a>
     <a href="https://github.com/forge-veil/netphantom" class="btn-s">View source</a>
   </div>
 </section>
@@ -462,38 +455,6 @@
   </div><!-- /frame-row -->
 </div><!-- /screens -->
 
-<!-- Install -->
-<div class="install">
-  <h2>Get started in 60 seconds</h2>
-  <div class="step">
-    <div class="step-n">1</div>
-    <div>
-      <h3>Clone the repo</h3>
-      <p><code>git clone https://github.com/forge-veil/netphantom.git</code></p>
-    </div>
-  </div>
-  <div class="step">
-    <div class="step-n">2</div>
-    <div>
-      <h3>Load in Chrome</h3>
-      <p>Open <code>chrome://extensions</code>, enable <strong>Developer mode</strong>, click <strong>Load unpacked</strong>, select the repo folder.</p>
-    </div>
-  </div>
-  <div class="step">
-    <div class="step-n">3</div>
-    <div>
-      <h3>Open DevTools</h3>
-      <p>Press <code>F12</code> on any tab and switch to the <strong>NetPhantom</strong> panel.</p>
-    </div>
-  </div>
-  <div class="step">
-    <div class="step-n">4</div>
-    <div>
-      <h3>Browse normally</h3>
-      <p>The graph builds itself in real time. Click any node to filter. Export with <code>↓ HAR</code>.</p>
-    </div>
-  </div>
-</div>
 
 <footer>
   MIT License &mdash; IP data from <a href="https://db-ip.com">DB-IP Lite</a> (CC BY 4.0) &mdash; <a href="https://github.com/forge-veil/netphantom">github.com/forge-veil/netphantom</a>
