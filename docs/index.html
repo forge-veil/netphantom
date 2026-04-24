@@ -3,459 +3,572 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>NetPhantom — Real-Time Network Visualizer for Chrome</title>
-  <meta name="description" content="See every network request a page makes as a live 3D force-graph and world map, right inside Chrome DevTools.">
+  <title>NetPhantom — Network Visualizer for Chrome DevTools</title>
+  <meta name="description" content="See every network request as a live force-directed graph and geolocated world map, right inside Chrome DevTools.">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --bg:       #07090f;
-      --bg2:      #0d1117;
-      --border:   rgba(255,255,255,0.07);
-      --purple:   #9f7aea;
-      --purple2:  #7c3aed;
-      --green:    #00ff88;
-      --sky:      #00ccff;
-      --amber:    #ffbb00;
-      --text:     #e2e8f0;
-      --text2:    #94a3b8;
-      --text3:    #475569;
+      --bg:     #07090f;
+      --bg2:    #0d1117;
+      --bg3:    #111827;
+      --border: rgba(255,255,255,0.07);
+      --purple: #9f7aea;
+      --purple2:#7c3aed;
+      --green:  #00ff88;
+      --sky:    #00ccff;
+      --amber:  #ff9f0a;
+      --red:    #ff453a;
+      --text:   #e2e8f0;
+      --text2:  #94a3b8;
+      --text3:  #475569;
     }
-
     html { scroll-behavior: smooth; }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.6;
-    }
-
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; }
     a { color: var(--purple); text-decoration: none; }
-    a:hover { text-decoration: underline; }
 
-    /* ── Nav ───────────────────────────────────────────────────── */
+    /* ── Nav ── */
     nav {
       position: sticky; top: 0; z-index: 100;
-      display: flex; align-items: center; gap: 2rem;
+      display: flex; align-items: center; justify-content: space-between;
       padding: 0.75rem 2rem;
-      background: rgba(7,9,15,0.85);
-      backdrop-filter: blur(12px);
+      background: rgba(7,9,15,0.88); backdrop-filter: blur(14px);
       border-bottom: 1px solid var(--border);
     }
-    .nav-logo {
-      display: flex; align-items: center; gap: 0.5rem;
-      font-weight: 700; font-size: 1rem; color: var(--text);
-    }
-    .nav-links { display: flex; gap: 1.5rem; margin-left: auto; }
-    .nav-links a { font-size: 0.875rem; color: var(--text2); }
-    .nav-links a:hover { color: var(--text); text-decoration: none; }
-    .nav-cta {
-      padding: 0.4rem 1rem;
-      background: var(--purple2);
-      color: #fff !important;
-      border-radius: 6px;
-      font-size: 0.875rem;
-      font-weight: 600;
-    }
-    .nav-cta:hover { background: var(--purple); text-decoration: none !important; }
+    .nav-logo { display: flex; align-items: center; gap: 0.5rem; font-weight: 700; font-size: 0.95rem; color: var(--text); }
+    .nav-gh { display: flex; align-items: center; gap: 0.4rem; padding: 0.35rem 0.9rem; background: rgba(255,255,255,0.06); border: 1px solid var(--border); border-radius: 6px; font-size: 0.8rem; color: var(--text2); }
+    .nav-gh:hover { border-color: var(--purple); color: var(--text); }
 
-    /* ── Sections ──────────────────────────────────────────────── */
-    section { padding: 5rem 2rem; max-width: 900px; margin: 0 auto; }
+    /* ── Hero ── */
+    .hero { padding: 5.5rem 2rem 3rem; text-align: center; }
+    .hero h1 { font-size: clamp(2rem, 4.5vw, 3rem); font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 1rem; }
+    .hero h1 em { font-style: normal; color: var(--purple); }
+    .hero p { color: var(--text2); font-size: 1.05rem; max-width: 480px; margin: 0 auto 2rem; }
+    .btns { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
+    .btn-p { padding: 0.55rem 1.25rem; background: var(--purple2); color: #fff; border-radius: 7px; font-size: 0.875rem; font-weight: 600; }
+    .btn-p:hover { background: var(--purple); }
+    .btn-s { padding: 0.55rem 1.25rem; border: 1px solid var(--border); color: var(--text2); border-radius: 7px; font-size: 0.875rem; }
+    .btn-s:hover { border-color: var(--purple); color: var(--text); }
 
-    /* ── Hero ──────────────────────────────────────────────────── */
-    #hero {
-      text-align: center;
-      padding-top: 7rem;
-      padding-bottom: 5rem;
-      max-width: 760px;
+    /* ── Mock frames ── */
+    .screens { padding: 1rem 2rem 4rem; max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem; }
+    .frame {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 12px; overflow: hidden;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 32px 64px rgba(0,0,0,0.6);
     }
-    .hero-badge {
-      display: inline-block;
-      padding: 0.25rem 0.75rem;
-      border: 1px solid rgba(159,122,234,0.35);
-      border-radius: 99px;
-      font-size: 0.75rem;
-      color: var(--purple);
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      margin-bottom: 1.5rem;
-    }
-    h1 {
-      font-size: clamp(2rem, 5vw, 3.25rem);
-      font-weight: 800;
-      line-height: 1.15;
-      letter-spacing: -0.02em;
-      margin-bottom: 1.25rem;
-    }
-    h1 span { color: var(--purple); }
-    .hero-sub {
-      font-size: 1.125rem;
-      color: var(--text2);
-      max-width: 560px;
-      margin: 0 auto 2.5rem;
-    }
-    .btn-row { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
-    .btn {
-      padding: 0.65rem 1.5rem;
-      border-radius: 8px;
-      font-size: 0.9375rem;
-      font-weight: 600;
-      cursor: pointer;
-      border: none;
-    }
-    .btn-primary { background: var(--purple2); color: #fff; }
-    .btn-primary:hover { background: var(--purple); text-decoration: none; }
-    .btn-secondary {
-      background: transparent;
-      color: var(--text);
-      border: 1px solid var(--border);
-    }
-    .btn-secondary:hover { border-color: var(--purple); text-decoration: none; }
+    .frame-row { display: grid; grid-template-columns: 1fr 340px; gap: 1.5rem; }
+    @media (max-width: 760px) { .frame-row { grid-template-columns: 1fr; } }
 
-    /* ── Logo SVG ──────────────────────────────────────────────── */
-    .hero-logo {
-      width: 80px; height: 80px;
-      margin: 0 auto 2rem;
+    /* ── Panel toolbar ── */
+    .p-toolbar {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 10px; background: #0a0d16; border-bottom: 1px solid var(--border);
+      font-size: 11px;
     }
+    .p-logo { display: flex; align-items: center; gap: 5px; font-weight: 700; font-size: 11px; color: var(--text); margin-right: 4px; }
+    .chip { padding: 1px 6px; border-radius: 3px; font-size: 9px; font-weight: 700; letter-spacing: .06em; }
+    .chip-live { background: rgba(0,255,136,0.15); color: var(--green); border: 1px solid rgba(0,255,136,0.3); }
+    .p-btn { padding: 2px 7px; border-radius: 4px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); color: var(--text2); font-size: 10px; cursor: default; }
+    .p-sep { flex: 1; }
+    .p-btn-purple { background: rgba(124,58,237,0.2); border-color: rgba(124,58,237,0.35); color: var(--purple); }
 
-    /* ── Feature grid ──────────────────────────────────────────── */
-    h2 {
-      font-size: 1.75rem;
-      font-weight: 700;
-      margin-bottom: 0.5rem;
-      letter-spacing: -0.01em;
-    }
-    .section-lead {
-      color: var(--text2);
-      margin-bottom: 2.5rem;
-      font-size: 1rem;
-    }
-    .feature-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-      gap: 1rem;
-    }
-    .feature-card {
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 1.25rem 1.5rem;
-    }
-    .feature-card h3 { font-size: 0.95rem; font-weight: 600; margin-bottom: 0.35rem; }
-    .feature-card p { font-size: 0.85rem; color: var(--text2); line-height: 1.55; }
-    .feature-icon { font-size: 1.25rem; margin-bottom: 0.6rem; }
+    /* ── Nav bar ── */
+    .p-navbar { display: flex; align-items: center; gap: 0; background: #080b12; border-bottom: 1px solid var(--border); padding: 0 10px; }
+    .p-navtab { padding: 5px 12px; font-size: 10px; color: var(--text3); border-bottom: 1px solid transparent; cursor: default; white-space: nowrap; }
+    .p-navtab.active { color: var(--text); border-bottom-color: var(--purple); }
+    .nav-dot { display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--green); margin-right: 4px; vertical-align: middle; }
+    .nav-count { display: inline-block; padding: 0 4px; background: rgba(255,255,255,0.08); border-radius: 3px; font-size: 9px; margin-left: 4px; color: var(--text2); }
 
-    /* ── Architecture ──────────────────────────────────────────── */
-    #architecture pre {
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 1.5rem;
-      font-size: 0.8rem;
-      color: var(--text2);
-      overflow-x: auto;
-      line-height: 1.7;
-    }
+    /* ── Graph canvas area ── */
+    .p-graph { position: relative; background: #070a11; padding: 0; line-height: 0; }
+    .p-graph svg { display: block; width: 100%; height: auto; }
 
-    /* ── Install steps ─────────────────────────────────────────── */
-    .steps { counter-reset: step; display: flex; flex-direction: column; gap: 1rem; }
-    .step {
-      counter-increment: step;
-      display: grid;
-      grid-template-columns: 2rem 1fr;
-      gap: 1rem;
-      align-items: start;
-    }
-    .step-num {
-      width: 2rem; height: 2rem;
-      border-radius: 50%;
-      background: var(--purple2);
-      color: #fff;
-      font-size: 0.8rem;
-      font-weight: 700;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-    }
-    .step h3 { font-size: 0.95rem; font-weight: 600; margin-bottom: 0.2rem; }
-    .step p, .step code { font-size: 0.875rem; color: var(--text2); }
-    code {
-      font-family: 'SF Mono', 'Fira Code', monospace;
-      background: rgba(255,255,255,0.07);
-      padding: 0.1em 0.4em;
-      border-radius: 4px;
-      font-size: 0.85em;
-      color: var(--text);
-    }
+    /* ── Request table ── */
+    .p-table-bar { border-top: 1px solid var(--border); }
+    .p-type-bar { display: flex; align-items: center; gap: 4px; padding: 5px 10px; background: #080b12; border-bottom: 1px solid var(--border); overflow-x: auto; }
+    .t-btn { padding: 2px 7px; border-radius: 3px; font-size: 9px; color: var(--text3); cursor: default; white-space: nowrap; }
+    .t-btn.active { background: rgba(159,122,234,0.15); color: var(--purple); }
+    .t-count { margin-left: auto; font-size: 9px; color: var(--text3); white-space: nowrap; }
+    .p-table { width: 100%; border-collapse: collapse; font-size: 10px; }
+    .p-table th { padding: 4px 8px; text-align: left; color: var(--text3); font-weight: 500; border-bottom: 1px solid var(--border); background: #09101a; white-space: nowrap; }
+    .p-table td { padding: 4px 8px; border-bottom: 1px solid rgba(255,255,255,0.04); color: var(--text2); white-space: nowrap; font-family: 'SF Mono', monospace; font-size: 9.5px; }
+    .p-table tr.selected td { background: rgba(124,58,237,0.12); }
+    .p-table tr:hover td { background: rgba(255,255,255,0.02); }
+    .st { display: inline-block; padding: 1px 5px; border-radius: 3px; font-weight: 700; font-size: 9px; }
+    .st-2 { background: rgba(0,255,136,0.12); color: var(--green); }
+    .st-3 { background: rgba(0,204,255,0.12); color: var(--sky); }
+    .st-4 { background: rgba(255,159,10,0.12); color: var(--amber); }
+    .st-5 { background: rgba(255,69,58,0.12); color: var(--red); }
+    .mth { display: inline-block; padding: 1px 5px; border-radius: 3px; font-size: 9px; font-weight: 600; background: rgba(255,255,255,0.06); color: var(--text2); }
+    .path-cell { color: var(--text3); max-width: 160px; overflow: hidden; text-overflow: ellipsis; }
 
-    /* ── Privacy block ─────────────────────────────────────────── */
-    .privacy-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 1rem;
-    }
-    .privacy-card {
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 1.25rem;
-      font-size: 0.875rem;
-    }
-    .privacy-card strong { display: block; margin-bottom: 0.3rem; color: var(--green); }
-    .privacy-card span { color: var(--text2); }
+    /* ── Status bar ── */
+    .p-statusbar { display: flex; align-items: center; gap: 10px; padding: 3px 10px; background: #060810; border-top: 1px solid var(--border); font-size: 9px; color: var(--text3); }
+    .sb-dot { display: inline-block; width: 4px; height: 4px; border-radius: 50%; margin-right: 3px; vertical-align: middle; }
 
-    /* ── Permissions table ─────────────────────────────────────── */
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.875rem;
-    }
-    th, td { padding: 0.6rem 0.75rem; border-bottom: 1px solid var(--border); text-align: left; }
-    th { color: var(--text2); font-weight: 500; }
-    td:first-child { font-family: 'SF Mono', monospace; font-size: 0.8rem; color: var(--purple); }
+    /* ── Sidebar (detail panel) ── */
+    .p-sidebar { background: #0a0d16; border-left: 1px solid var(--border); display: flex; flex-direction: column; font-size: 10px; overflow: hidden; }
+    .sb-header { padding: 10px; border-bottom: 1px solid var(--border); }
+    .sb-meta { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
+    .sb-method { padding: 2px 6px; border-radius: 3px; font-size: 9px; font-weight: 700; background: rgba(255,69,58,0.15); color: var(--red); }
+    .sb-status { font-size: 10px; font-weight: 700; }
+    .sb-url { font-family: 'SF Mono', monospace; font-size: 9px; color: var(--text2); margin-bottom: 4px; word-break: break-all; line-height: 1.4; }
+    .sb-stats { display: flex; gap: 8px; font-size: 9px; color: var(--text3); }
+    .sb-tabs { display: flex; border-bottom: 1px solid var(--border); }
+    .sb-tab { padding: 5px 10px; font-size: 9.5px; color: var(--text3); cursor: default; border-bottom: 1px solid transparent; }
+    .sb-tab.active { color: var(--purple); border-bottom-color: var(--purple); }
+    .sb-body { padding: 8px 10px; flex: 1; overflow: hidden; }
+    .hdr-section { margin-bottom: 8px; }
+    .hdr-title { font-size: 8.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--text3); margin-bottom: 4px; }
+    .hdr-row { display: flex; justify-content: space-between; gap: 8px; padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.03); font-size: 9px; }
+    .hdr-name { color: var(--text3); white-space: nowrap; }
+    .hdr-val { color: var(--text2); font-family: 'SF Mono', monospace; font-size: 8.5px; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 160px; }
+    .hdr-val.redacted { color: var(--amber); }
 
-    /* ── Footer ────────────────────────────────────────────────── */
-    footer {
-      border-top: 1px solid var(--border);
-      padding: 2rem;
-      text-align: center;
-      font-size: 0.8rem;
-      color: var(--text3);
-    }
+    /* ── World map panel ── */
+    .map-frame { background: #05070e; position: relative; line-height: 0; }
+    .map-frame svg { display: block; width: 100%; height: auto; }
+    .map-legend { position: absolute; bottom: 8px; right: 10px; display: flex; align-items: center; gap: 8px; font-size: 8.5px; color: var(--text3); }
+    .ml-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 2px; vertical-align: middle; }
+
+    /* ── Section labels ── */
+    .section-label { text-align: center; padding-top: 3rem; padding-bottom: 1rem; }
+    .section-label h2 { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.35rem; }
+    .section-label p { font-size: 0.875rem; color: var(--text2); }
+
+    /* ── Install ── */
+    .install { max-width: 560px; margin: 0 auto; padding: 3rem 2rem 4rem; }
+    .install h2 { font-size: 1.4rem; font-weight: 700; margin-bottom: 1.5rem; letter-spacing: -0.02em; }
+    .step { display: grid; grid-template-columns: 28px 1fr; gap: 12px; margin-bottom: 1rem; align-items: start; }
+    .step-n { width: 28px; height: 28px; border-radius: 50%; background: var(--purple2); color: #fff; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .step h3 { font-size: 0.875rem; font-weight: 600; margin-bottom: 2px; }
+    .step p { font-size: 0.8rem; color: var(--text2); line-height: 1.5; }
+    code { font-family: 'SF Mono', 'Fira Code', monospace; background: rgba(255,255,255,0.07); padding: .1em .35em; border-radius: 3px; font-size: .82em; color: var(--text); }
+
+    /* ── Footer ── */
+    footer { border-top: 1px solid var(--border); padding: 1.5rem 2rem; text-align: center; font-size: 0.775rem; color: var(--text3); }
     footer a { color: var(--text3); }
     footer a:hover { color: var(--text2); }
   </style>
 </head>
 <body>
 
-<!-- Nav -->
 <nav>
   <div class="nav-logo">
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+    <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
       <circle cx="10" cy="10" r="3" fill="#9f7aea"/>
-      <circle cx="3"  cy="5"  r="2" fill="#00ff88"/>
-      <circle cx="17" cy="5"  r="2" fill="#00ff88"/>
-      <circle cx="3"  cy="15" r="2" fill="#00ccff"/>
+      <circle cx="3" cy="5" r="2" fill="#00ff88"/>
+      <circle cx="17" cy="5" r="2" fill="#00ff88"/>
+      <circle cx="3" cy="15" r="2" fill="#00ccff"/>
       <circle cx="17" cy="15" r="2" fill="#ffbb00"/>
-      <line x1="10" y1="10" x2="3"  y2="5"  stroke="#7c3aed" stroke-width="1"/>
-      <line x1="10" y1="10" x2="17" y2="5"  stroke="#7c3aed" stroke-width="1"/>
-      <line x1="10" y1="10" x2="3"  y2="15" stroke="#7c3aed" stroke-width="1"/>
+      <line x1="10" y1="10" x2="3" y2="5" stroke="#7c3aed" stroke-width="1"/>
+      <line x1="10" y1="10" x2="17" y2="5" stroke="#7c3aed" stroke-width="1"/>
+      <line x1="10" y1="10" x2="3" y2="15" stroke="#7c3aed" stroke-width="1"/>
       <line x1="10" y1="10" x2="17" y2="15" stroke="#7c3aed" stroke-width="1"/>
     </svg>
     NetPhantom
   </div>
-  <div class="nav-links">
-    <a href="#features">Features</a>
-    <a href="#architecture">Architecture</a>
-    <a href="#install">Install</a>
-    <a href="#privacy">Privacy</a>
-    <a href="https://github.com/forge-veil/netphantom" class="nav-cta">GitHub</a>
-  </div>
+  <a href="https://github.com/forge-veil/netphantom" class="nav-gh">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+    GitHub
+  </a>
 </nav>
 
 <!-- Hero -->
-<section id="hero">
-  <svg class="hero-logo" viewBox="0 0 80 80" fill="none">
-    <circle cx="40" cy="40" r="12" fill="#9f7aea" opacity="0.9"/>
-    <circle cx="12" cy="20" r="8"  fill="#00ff88"/>
-    <circle cx="68" cy="20" r="8"  fill="#00ff88"/>
-    <circle cx="12" cy="60" r="8"  fill="#00ccff"/>
-    <circle cx="68" cy="60" r="8"  fill="#ffbb00"/>
-    <line x1="40" y1="40" x2="12" y2="20" stroke="#7c3aed" stroke-width="2.5"/>
-    <line x1="40" y1="40" x2="68" y2="20" stroke="#7c3aed" stroke-width="2.5"/>
-    <line x1="40" y1="40" x2="12" y2="60" stroke="#7c3aed" stroke-width="2.5"/>
-    <line x1="40" y1="40" x2="68" y2="60" stroke="#7c3aed" stroke-width="2.5"/>
-  </svg>
-  <div class="hero-badge">Chrome DevTools Extension</div>
-  <h1>See the <span>network graph</span> behind any website</h1>
-  <p class="hero-sub">
-    NetPhantom visualises every request a page makes as a live force-directed graph,
-    a geolocated world map, and a filterable request table — all inside Chrome DevTools.
-    No data ever leaves your browser.
-  </p>
-  <div class="btn-row">
-    <a href="#install" class="btn btn-primary">Install extension</a>
-    <a href="https://github.com/forge-veil/netphantom" class="btn btn-secondary">View on GitHub</a>
+<section class="hero">
+  <h1>See the <em>network graph</em><br>behind any website</h1>
+  <p>A Chrome DevTools panel that maps every request as a live force-directed graph, a geolocated world map, and a filterable table.</p>
+  <div class="btns">
+    <a href="#install" class="btn-p">Install free</a>
+    <a href="https://github.com/forge-veil/netphantom" class="btn-s">View source</a>
   </div>
 </section>
 
-<!-- Features -->
-<section id="features">
-  <h2>Everything you need to understand network traffic</h2>
-  <p class="section-lead">All views are live, interactive, and filter each other.</p>
-  <div class="feature-grid">
-    <div class="feature-card">
-      <div class="feature-icon">◈</div>
-      <h3>3D Force Graph</h3>
-      <p>Nodes are origins, edges are cross-origin calls. Orbit in 3D, zoom, drag nodes. Click a node to filter all other views to that domain.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">◉</div>
-      <h3>World Map</h3>
-      <p>Server IPs are geolocated to country-level dots with arced edges from the page origin. Hover for hostname and request stats. Click to filter.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">≡</div>
-      <h3>Request Table</h3>
-      <p>Filter by request type (Fetch/XHR, JS, CSS, Image, WebSocket, …) or by URL substring. Click any row to open the detail sidebar.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">⊞</div>
-      <h3>Detail Sidebar</h3>
-      <p>Per-request tabs: query params, request and response headers, timing waterfall, and full TLS/SSL certificate details.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">✦</div>
-      <h3>AI Insights</h3>
-      <p>Automatically flags anomalies: rate limit responses, slow endpoints, unusually large payloads, and high server error rates.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">↓</div>
-      <h3>HAR Export</h3>
-      <p>Export the full captured session as a standard <code>.har</code> file — compatible with any HAR viewer or performance tool.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">⬡</div>
-      <h3>Request Mocking</h3>
-      <p>Intercept any request by URL pattern and return a custom status code, headers, and JSON body without touching the server.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">⏸</div>
-      <h3>Session History</h3>
-      <p>Each page navigation creates a snapshot tab. Switch between them to compare traffic across navigations in the same session.</p>
-    </div>
-  </div>
-</section>
+<!-- Main panel mockup -->
+<div class="screens">
+  <div class="frame">
 
-<!-- Architecture -->
-<section id="architecture">
-  <h2>How it works</h2>
-  <p class="section-lead">Two independent capture paths feed a single panel through the service worker.</p>
-  <pre>
-Browser tab
-  └─ content/interceptor.js     wraps fetch / XHR / WebSocket
-                                fires CONTENT_REQUEST → service worker (real-time)
+    <!-- Toolbar -->
+    <div class="p-toolbar">
+      <div class="p-logo">
+        <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
+          <circle cx="10" cy="10" r="3" fill="#9f7aea"/>
+          <circle cx="3" cy="5" r="2" fill="#00ff88"/>
+          <circle cx="17" cy="5" r="2" fill="#00ff88"/>
+          <circle cx="3" cy="15" r="2" fill="#00ccff"/>
+          <circle cx="17" cy="15" r="2" fill="#ffbb00"/>
+          <line x1="10" y1="10" x2="3" y2="5" stroke="#7c3aed" stroke-width="1"/>
+          <line x1="10" y1="10" x2="17" y2="5" stroke="#7c3aed" stroke-width="1"/>
+          <line x1="10" y1="10" x2="3" y2="15" stroke="#7c3aed" stroke-width="1"/>
+          <line x1="10" y1="10" x2="17" y2="15" stroke="#7c3aed" stroke-width="1"/>
+        </svg>
+        NetPhantom
+      </div>
+      <span class="chip chip-live">LIVE</span>
+      <div class="p-btn">⏸ Pause</div>
+      <div class="p-btn">⊗ Clear</div>
+      <div class="p-sep"></div>
+      <div class="p-btn p-btn-purple">✦ Insights</div>
+      <div class="p-btn">◉ Map</div>
+      <div class="p-btn">↓ HAR</div>
+    </div>
 
-DevTools page  (devtools/devtools.js)
-  └─ chrome.devtools.network    onRequestFinished → full headers, timing, TLS, serverIP
-  └─ chrome.devtools.network    onNavigated → triggers per-page snapshot
+    <!-- Nav bar -->
+    <div class="p-navbar">
+      <div class="p-navtab">Session</div>
+      <div class="p-navtab">stripe.com/checkout</div>
+      <div class="p-navtab active"><span class="nav-dot"></span>stripe.com/dashboard<span class="nav-count">41</span></div>
+    </div>
 
-Service worker  (background/service-worker.js)
-  ├─ chrome.webRequest          caches real HTTP status codes (fixes devtools status:0 bug)
-  ├─ port devtools-{tabId}      receives events from devtools.js; buffers up to 300
-  ├─ port panel-{tabId}         flushes buffer on connect; forwards live events
-  └─ mock rules                 CHECK_MOCK / SET_MOCK / REMOVE_MOCK / GET_MOCKS
+    <!-- Graph -->
+    <div class="p-graph">
+      <svg viewBox="0 0 900 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <filter id="glow-green" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="3" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <filter id="glow-purple" x="-60%" y="-60%" width="220%" height="220%">
+            <feGaussianBlur stdDeviation="5" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <filter id="glow-red">
+            <feGaussianBlur stdDeviation="3" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <filter id="glow-amber">
+            <feGaussianBlur stdDeviation="3" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <radialGradient id="bg-grad" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#0c1228"/>
+            <stop offset="100%" stop-color="#070a11"/>
+          </radialGradient>
+        </defs>
 
-Panel  (devtools/panel/)
-  ├─ panel.js                   main controller: graph, map, table, sidebar, filters
-  ├─ graph.js                   3D force-directed canvas renderer
-  ├─ worldmap.js                equirectangular canvas map (TopoJSON country outlines)
-  ├─ geoip-data.js              offline IP→country lookup — generated binary, no API calls
-  └─ annotations.js             AI anomaly detection</pre>
-</section>
+        <rect width="900" height="240" fill="url(#bg-grad)"/>
+
+        <!-- Edges (quadratic bezier curves from page node at 450,120) -->
+        <!-- → api.stripe.com (160,65) -->
+        <path d="M 450,120 Q 305,40 160,65" stroke="#00ff88" stroke-width="0.8" opacity="0.3"/>
+        <!-- → fonts.gstatic.com (700,58) -->
+        <path d="M 450,120 Q 575,28 700,58" stroke="#00ff88" stroke-width="0.8" opacity="0.3"/>
+        <!-- → cdn.jsdelivr.net (790,140) -->
+        <path d="M 450,120 Q 620,90 790,140" stroke="#00ff88" stroke-width="0.8" opacity="0.3"/>
+        <!-- → analytics.google.com (680,200) -->
+        <path d="M 450,120 Q 565,185 680,200" stroke="#ff9f0a" stroke-width="0.8" opacity="0.35"/>
+        <!-- → api.openai.com (220,195) -->
+        <path d="M 450,120 Q 335,188 220,195" stroke="#ff453a" stroke-width="0.8" opacity="0.35"/>
+        <!-- → sentry.io (450,22) -->
+        <path d="M 450,120 Q 430,58 450,22" stroke="#00ccff" stroke-width="0.8" opacity="0.3"/>
+        <!-- → cloudflare.com (80,130) -->
+        <path d="M 450,120 Q 265,95 80,130" stroke="#00ff88" stroke-width="0.8" opacity="0.3"/>
+
+        <!-- Page node (center, purple ring) -->
+        <circle cx="450" cy="120" r="18" stroke="#7c3aed" stroke-width="1.5" fill="rgba(124,58,237,0.08)" filter="url(#glow-purple)"/>
+        <circle cx="450" cy="120" r="5" fill="#9f7aea" filter="url(#glow-purple)"/>
+        <text x="450" y="148" text-anchor="middle" fill="#94a3b8" font-size="9" font-family="system-ui">stripe.com</text>
+
+        <!-- api.stripe.com — green -->
+        <circle cx="160" cy="65" r="10" fill="rgba(0,255,136,0.18)" stroke="#00ff88" stroke-width="1" filter="url(#glow-green)"/>
+        <circle cx="160" cy="65" r="4" fill="#00ff88" filter="url(#glow-green)"/>
+        <text x="160" y="82" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-family="system-ui">api.stripe.com</text>
+        <text x="160" y="92" text-anchor="middle" fill="#475569" font-size="7.5" font-family="system-ui">12 req · 238ms avg</text>
+
+        <!-- fonts.gstatic.com — green -->
+        <circle cx="700" cy="58" r="8" fill="rgba(0,255,136,0.14)" stroke="#00ff88" stroke-width="0.8" filter="url(#glow-green)"/>
+        <circle cx="700" cy="58" r="3.5" fill="#00ff88"/>
+        <text x="700" y="74" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-family="system-ui">fonts.gstatic.com</text>
+
+        <!-- cdn.jsdelivr.net — green -->
+        <circle cx="790" cy="140" r="9" fill="rgba(0,255,136,0.14)" stroke="#00ff88" stroke-width="0.8" filter="url(#glow-green)"/>
+        <circle cx="790" cy="140" r="3.5" fill="#00ff88"/>
+        <text x="790" y="156" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-family="system-ui">cdn.jsdelivr.net</text>
+
+        <!-- analytics.google.com — amber (slow) -->
+        <circle cx="680" cy="200" r="10" fill="rgba(255,159,10,0.16)" stroke="#ff9f0a" stroke-width="1" filter="url(#glow-amber)"/>
+        <circle cx="680" cy="200" r="4" fill="#ff9f0a"/>
+        <text x="680" y="216" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-family="system-ui">analytics.google.com</text>
+        <text x="680" y="226" text-anchor="middle" fill="#475569" font-size="7.5" font-family="system-ui">avg 1.8s</text>
+
+        <!-- api.openai.com — red (errors) -->
+        <circle cx="220" cy="195" r="11" fill="rgba(255,69,58,0.16)" stroke="#ff453a" stroke-width="1" filter="url(#glow-red)"/>
+        <circle cx="220" cy="195" r="4.5" fill="#ff453a"/>
+        <text x="220" y="212" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-family="system-ui">api.openai.com</text>
+        <text x="220" y="222" text-anchor="middle" fill="#475569" font-size="7.5" font-family="system-ui">3 × 429</text>
+
+        <!-- sentry.io — sky (WS) -->
+        <circle cx="450" cy="22" r="8" fill="rgba(0,204,255,0.14)" stroke="#00ccff" stroke-width="0.8"/>
+        <circle cx="450" cy="22" r="3.5" fill="#00ccff"/>
+        <text x="450" y="10" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-family="system-ui">sentry.io</text>
+        <text x="450" y="0" text-anchor="middle" fill="#475569" font-size="7.5" font-family="system-ui" dy="1">WS</text>
+
+        <!-- cloudflare.com — green -->
+        <circle cx="80" cy="130" r="8" fill="rgba(0,255,136,0.14)" stroke="#00ff88" stroke-width="0.8" filter="url(#glow-green)"/>
+        <circle cx="80" cy="130" r="3.5" fill="#00ff88"/>
+        <text x="80" y="146" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-family="system-ui">cloudflare.com</text>
+
+        <!-- Ambient particles along edges (static dots simulating live traffic) -->
+        <circle cx="295" cy="88" r="2" fill="#00ff88" opacity="0.7"/>
+        <circle cx="338" cy="74" r="1.5" fill="#00ff88" opacity="0.5"/>
+        <circle cx="590" cy="68" r="2" fill="#00ff88" opacity="0.6"/>
+        <circle cx="640" cy="78" r="1.5" fill="#00ff88" opacity="0.4"/>
+        <circle cx="352" cy="170" r="2" fill="#ff453a" opacity="0.65"/>
+        <circle cx="560" cy="168" r="1.5" fill="#ff9f0a" opacity="0.5"/>
+        <circle cx="450" cy="75" r="2" fill="#00ccff" opacity="0.6"/>
+      </svg>
+    </div>
+
+    <!-- Request table -->
+    <div class="p-table-bar">
+      <div class="p-type-bar">
+        <span class="t-btn active">All</span>
+        <span class="t-btn">Fetch/XHR</span>
+        <span class="t-btn">Doc</span>
+        <span class="t-btn">CSS</span>
+        <span class="t-btn">JS</span>
+        <span class="t-btn">Font</span>
+        <span class="t-btn">Img</span>
+        <span class="t-btn">WS</span>
+        <span class="t-count">41 requests</span>
+      </div>
+      <table class="p-table">
+        <thead>
+          <tr>
+            <th>Status</th><th>Method</th><th>Domain</th><th>Path</th><th>Type</th><th>Size</th><th>Time</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="st st-2">200</span></td>
+            <td><span class="mth">GET</span></td>
+            <td>api.stripe.com</td>
+            <td class="path-cell">/v1/payment_intents</td>
+            <td>fetch</td><td>1.4 KB</td><td>342 ms</td>
+          </tr>
+          <tr>
+            <td><span class="st st-2">200</span></td>
+            <td><span class="mth">GET</span></td>
+            <td>fonts.gstatic.com</td>
+            <td class="path-cell">/s/inter/v13/uq8WXw.woff2</td>
+            <td>font</td><td>22.1 KB</td><td>88 ms</td>
+          </tr>
+          <tr class="selected">
+            <td><span class="st st-4">429</span></td>
+            <td><span class="mth">POST</span></td>
+            <td>api.openai.com</td>
+            <td class="path-cell">/v1/chat/completions</td>
+            <td>fetch</td><td>245 B</td><td>1.24 s</td>
+          </tr>
+          <tr>
+            <td><span class="st st-4">404</span></td>
+            <td><span class="mth">GET</span></td>
+            <td>cloudflare.com</td>
+            <td class="path-cell">/cdn/chunk-abc123.js</td>
+            <td>script</td><td>—</td><td>112 ms</td>
+          </tr>
+          <tr>
+            <td><span class="st st-2">200</span></td>
+            <td><span class="mth">GET</span></td>
+            <td>cdn.jsdelivr.net</td>
+            <td class="path-cell">/npm/react@18.2.0/react.js</td>
+            <td>script</td><td>42.3 KB</td><td>56 ms</td>
+          </tr>
+          <tr>
+            <td><span class="st st-3">101</span></td>
+            <td><span class="mth">WS</span></td>
+            <td>sentry.io</td>
+            <td class="path-cell">/api/3/envelope/</td>
+            <td>websocket</td><td>—</td><td>—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Status bar -->
+    <div class="p-statusbar">
+      <span><span class="sb-dot" style="background:var(--green)"></span>41 requests</span>
+      <span><span class="sb-dot" style="background:var(--sky)"></span>7 origins</span>
+      <span><span class="sb-dot" style="background:var(--amber)"></span>avg 312 ms</span>
+      <span><span class="sb-dot" style="background:var(--red)"></span>4 errors</span>
+      <span style="margin-left:auto;color:var(--text3)">stripe.com/dashboard</span>
+    </div>
+
+  </div><!-- /main frame -->
+
+  <!-- World map + Sidebar row -->
+  <div class="frame-row">
+
+    <!-- World map -->
+    <div class="frame">
+      <div class="p-toolbar" style="padding:5px 10px;">
+        <span style="font-size:10px;color:var(--text2)">◉ World Map</span>
+        <span style="margin-left:auto;font-size:9px;color:var(--text3)">7 servers geolocated</span>
+      </div>
+      <div class="map-frame">
+        <svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="ocean" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#05070e"/>
+              <stop offset="100%" stop-color="#070f1c"/>
+            </linearGradient>
+            <filter id="dot-glow">
+              <feGaussianBlur stdDeviation="2.5" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+          <rect width="640" height="300" fill="url(#ocean)"/>
+
+          <!-- Graticule -->
+          <line x1="0" y1="100" x2="640" y2="100" stroke="rgba(255,255,255,0.028)" stroke-width="0.5"/>
+          <line x1="0" y1="150" x2="640" y2="150" stroke="rgba(255,255,255,0.05)" stroke-dasharray="3,8" stroke-width="0.8"/>
+          <line x1="0" y1="200" x2="640" y2="200" stroke="rgba(255,255,255,0.028)" stroke-width="0.5"/>
+          <line x1="160" y1="0" x2="160" y2="300" stroke="rgba(255,255,255,0.028)" stroke-width="0.5"/>
+          <line x1="320" y1="0" x2="320" y2="300" stroke="rgba(255,255,255,0.028)" stroke-width="0.5"/>
+          <line x1="480" y1="0" x2="480" y2="300" stroke="rgba(255,255,255,0.028)" stroke-width="0.5"/>
+
+          <!-- Continent fills (simplified) -->
+          <!-- North America -->
+          <path d="M 40,62 L 82,48 L 128,52 L 158,62 L 172,92 L 192,105 L 200,132 L 182,158 L 162,168 L 138,162 L 112,155 L 88,152 L 68,138 L 50,112 L 36,88 Z" fill="#0c1626" stroke="rgba(50,105,200,0.2)" stroke-width="0.4"/>
+          <!-- South America -->
+          <path d="M 142,168 L 178,162 L 210,172 L 222,198 L 218,238 L 202,268 L 172,280 L 148,262 L 138,232 L 132,195 Z" fill="#0c1626" stroke="rgba(50,105,200,0.2)" stroke-width="0.4"/>
+          <!-- Europe -->
+          <path d="M 284,58 L 312,46 L 352,48 L 368,62 L 358,82 L 336,92 L 308,88 L 284,72 Z" fill="#0c1626" stroke="rgba(50,105,200,0.2)" stroke-width="0.4"/>
+          <!-- Africa -->
+          <path d="M 274,102 L 312,94 L 352,98 L 362,138 L 358,188 L 332,238 L 295,248 L 268,212 L 262,168 L 272,128 Z" fill="#0c1626" stroke="rgba(50,105,200,0.2)" stroke-width="0.4"/>
+          <!-- Asia -->
+          <path d="M 348,48 L 382,38 L 445,42 L 502,48 L 562,58 L 582,82 L 568,128 L 522,152 L 462,158 L 398,148 L 368,118 L 342,88 Z" fill="#0c1626" stroke="rgba(50,105,200,0.2)" stroke-width="0.4"/>
+          <!-- Australia -->
+          <path d="M 518,192 L 562,188 L 578,212 L 568,248 L 538,256 L 504,242 L 494,218 Z" fill="#0c1626" stroke="rgba(50,105,200,0.2)" stroke-width="0.4"/>
+
+          <!-- Arced edges from browser origin (San Francisco ~98,90) -->
+          <!-- to New York (~182,85) -->
+          <path d="M 98,90 Q 140,62 182,85" stroke="#34c759" stroke-width="0.85" opacity="0.28"/>
+          <!-- to London (~318,65) -->
+          <path d="M 98,90 Q 208,30 318,65" stroke="#34c759" stroke-width="0.85" opacity="0.28"/>
+          <!-- to Frankfurt (~333,68) -->
+          <path d="M 98,90 Q 215,28 333,68" stroke="#34c759" stroke-width="0.85" opacity="0.28"/>
+          <!-- to Singapore (~502,155) -->
+          <path d="M 98,90 Q 300,52 502,155" stroke="#ff9f0a" stroke-width="0.85" opacity="0.28"/>
+          <!-- to Tokyo (~568,92) -->
+          <path d="M 98,90 Q 333,42 568,92" stroke="#ff453a" stroke-width="0.85" opacity="0.28"/>
+          <!-- to Sao Paulo (~175,235) -->
+          <path d="M 98,90 Q 136,162 175,235" stroke="#34c759" stroke-width="0.85" opacity="0.28"/>
+
+          <!-- Browser origin dot (purple ring) -->
+          <circle cx="98" cy="90" r="8" stroke="#a78bfa" stroke-width="1.5" fill="none" opacity="0.85" filter="url(#dot-glow)"/>
+          <circle cx="98" cy="90" r="3" fill="#fff" opacity="0.95"/>
+
+          <!-- Server dots -->
+          <!-- New York — green -->
+          <circle cx="182" cy="85" r="5" fill="#34c759" opacity="0.5" filter="url(#dot-glow)"/>
+          <circle cx="180" cy="83" r="2" fill="#fff" opacity="0.85"/>
+          <!-- London — green -->
+          <circle cx="318" cy="65" r="5" fill="#34c759" opacity="0.5" filter="url(#dot-glow)"/>
+          <circle cx="316" cy="63" r="2" fill="#fff" opacity="0.85"/>
+          <!-- Frankfurt — green -->
+          <circle cx="333" cy="68" r="5" fill="#34c759" opacity="0.5"/>
+          <circle cx="331" cy="66" r="2" fill="#fff" opacity="0.85"/>
+          <!-- Singapore — amber -->
+          <circle cx="502" cy="155" r="6" fill="#ff9f0a" opacity="0.5" filter="url(#dot-glow)"/>
+          <circle cx="500" cy="153" r="2.5" fill="#fff" opacity="0.85"/>
+          <!-- Tokyo — red -->
+          <circle cx="568" cy="92" r="6" fill="#ff453a" opacity="0.5" filter="url(#dot-glow)"/>
+          <circle cx="566" cy="90" r="2.5" fill="#fff" opacity="0.85"/>
+          <!-- Sao Paulo — green -->
+          <circle cx="175" cy="235" r="5" fill="#34c759" opacity="0.5"/>
+          <circle cx="173" cy="233" r="2" fill="#fff" opacity="0.85"/>
+        </svg>
+        <div class="map-legend">
+          <span><span class="ml-dot" style="background:#34c759"></span>2xx</span>
+          <span><span class="ml-dot" style="background:#ff9f0a"></span>4xx</span>
+          <span><span class="ml-dot" style="background:#ff453a"></span>5xx/err</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Request detail sidebar -->
+    <div class="frame">
+      <div class="p-sidebar" style="height:100%">
+        <div class="sb-header">
+          <div class="sb-meta">
+            <span class="sb-method">POST</span>
+            <span class="sb-status" style="color:var(--amber)">429</span>
+            <span style="font-size:9px;color:var(--text3);margin-left:auto">Too Many Requests</span>
+          </div>
+          <div class="sb-url">https://api.openai.com/v1/chat/completions</div>
+          <div class="sb-stats">
+            <span>api.openai.com</span>
+            <span>·</span>
+            <span>245 B</span>
+            <span>·</span>
+            <span>1.24 s</span>
+          </div>
+        </div>
+        <div class="sb-tabs">
+          <div class="sb-tab">Params</div>
+          <div class="sb-tab active">Headers</div>
+          <div class="sb-tab">Timing</div>
+          <div class="sb-tab">Security</div>
+        </div>
+        <div class="sb-body">
+          <div class="hdr-section">
+            <div class="hdr-title">Request Headers</div>
+            <div class="hdr-row"><span class="hdr-name">Content-Type</span><span class="hdr-val">application/json</span></div>
+            <div class="hdr-row"><span class="hdr-name">Authorization</span><span class="hdr-val redacted">Bearer sk-•••••••••••••••</span></div>
+            <div class="hdr-row"><span class="hdr-name">User-Agent</span><span class="hdr-val">Mozilla/5.0 (Macintosh…)</span></div>
+            <div class="hdr-row"><span class="hdr-name">Accept</span><span class="hdr-val">application/json</span></div>
+            <div class="hdr-row"><span class="hdr-name">Origin</span><span class="hdr-val">https://stripe.com</span></div>
+          </div>
+          <div class="hdr-section">
+            <div class="hdr-title">Response Headers</div>
+            <div class="hdr-row"><span class="hdr-name">Content-Type</span><span class="hdr-val">application/json</span></div>
+            <div class="hdr-row"><span class="hdr-name">Retry-After</span><span class="hdr-val" style="color:var(--amber)">60</span></div>
+            <div class="hdr-row"><span class="hdr-name">X-Request-Id</span><span class="hdr-val">req_9Xk2mNpQ7r</span></div>
+            <div class="hdr-row"><span class="hdr-name">CF-Ray</span><span class="hdr-val">8a3f2d1c0-SJC</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /frame-row -->
+</div><!-- /screens -->
 
 <!-- Install -->
-<section id="install">
-  <h2>Installation</h2>
-  <p class="section-lead">No build step required. Load the folder directly into Chrome.</p>
-  <div class="steps">
-    <div class="step">
-      <div class="step-num">1</div>
-      <div>
-        <h3>Clone the repository</h3>
-        <p><code>git clone https://github.com/forge-veil/netphantom.git</code></p>
-      </div>
-    </div>
-    <div class="step">
-      <div class="step-num">2</div>
-      <div>
-        <h3>Open the Extensions page</h3>
-        <p>Navigate to <code>chrome://extensions</code> and enable <strong>Developer mode</strong> with the toggle in the top-right corner.</p>
-      </div>
-    </div>
-    <div class="step">
-      <div class="step-num">3</div>
-      <div>
-        <h3>Load unpacked</h3>
-        <p>Click <strong>Load unpacked</strong> and select the cloned repo folder.</p>
-      </div>
-    </div>
-    <div class="step">
-      <div class="step-num">4</div>
-      <div>
-        <h3>Open DevTools</h3>
-        <p>Press <code>F12</code> on any tab and select the <strong>NetPhantom</strong> panel. Browse normally and watch the graph build itself.</p>
-      </div>
+<div class="install">
+  <h2>Get started in 60 seconds</h2>
+  <div class="step">
+    <div class="step-n">1</div>
+    <div>
+      <h3>Clone the repo</h3>
+      <p><code>git clone https://github.com/forge-veil/netphantom.git</code></p>
     </div>
   </div>
-
-  <br>
-  <h3 style="font-size:1rem; margin-bottom:0.5rem; margin-top:1.5rem;">Refresh the geo database (optional)</h3>
-  <p style="font-size:0.875rem; color:var(--text2);">
-    The bundled <code>geoip-data.js</code> was generated from DB-IP Lite at release time.
-    To update it to the latest monthly snapshot:
-  </p>
-  <pre style="margin-top:0.75rem; background:var(--bg2); border:1px solid var(--border); border-radius:8px; padding:1rem; font-size:0.8rem; color:var(--text2);">node tools/build-geoip.js</pre>
-</section>
-
-<!-- Privacy -->
-<section id="privacy">
-  <h2>Privacy</h2>
-  <p class="section-lead">NetPhantom is designed to be completely offline.</p>
-  <div class="privacy-grid">
-    <div class="privacy-card">
-      <strong>No telemetry</strong>
-      <span>No analytics, no crash reporting, no usage pings. Zero outbound traffic from the extension itself.</span>
-    </div>
-    <div class="privacy-card">
-      <strong>Offline geolocation</strong>
-      <span>Server IPs are resolved to countries using a bundled DB-IP Lite binary. No geo API calls are made.</span>
-    </div>
-    <div class="privacy-card">
-      <strong>Local-only data</strong>
-      <span>All captured request data stays in the panel's in-memory state and is cleared when you close DevTools.</span>
-    </div>
-    <div class="privacy-card">
-      <strong>Map topology</strong>
-      <span>Country outlines are fetched from jsDelivr (world-atlas TopoJSON) on first map open. This is the only outbound request NetPhantom makes.</span>
+  <div class="step">
+    <div class="step-n">2</div>
+    <div>
+      <h3>Load in Chrome</h3>
+      <p>Open <code>chrome://extensions</code>, enable <strong>Developer mode</strong>, click <strong>Load unpacked</strong>, select the repo folder.</p>
     </div>
   </div>
-</section>
-
-<!-- Permissions -->
-<section id="permissions">
-  <h2>Permissions explained</h2>
-  <p class="section-lead">NetPhantom requests the minimum permissions needed.</p>
-  <table>
-    <thead>
-      <tr><th>Permission</th><th>Why it's needed</th></tr>
-    </thead>
-    <tbody>
-      <tr><td>webRequest</td><td>Cache real HTTP status codes before the DevTools event fires (fixes a Chrome bug where CORS-blocked requests report status 0).</td></tr>
-      <tr><td>tabs</td><td>Associate each DevTools panel with the correct inspected tab ID.</td></tr>
-      <tr><td>scripting</td><td>Inject the content script that wraps fetch / XHR / WebSocket.</td></tr>
-      <tr><td>declarativeNetRequest</td><td>Return mocked responses for requests matching a user-defined URL pattern.</td></tr>
-      <tr><td>storage</td><td>Persist mock rules so they survive a service worker restart.</td></tr>
-      <tr><td>&lt;all_urls&gt;</td><td>Capture requests to any origin — necessary for a network inspector.</td></tr>
-    </tbody>
-  </table>
-</section>
-
-<!-- Attribution -->
-<section id="attribution" style="padding-bottom:2rem;">
-  <h2>Attribution</h2>
-  <p style="font-size:0.875rem; color:var(--text2); margin-top:0.5rem;">
-    IP geolocation data from <a href="https://db-ip.com">DB-IP Lite</a>
-    (<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>),
-    distributed via <a href="https://github.com/sapics/ip-location-db">ip-location-db</a>.<br>
-    Country boundary data from <a href="https://github.com/topojson/world-atlas">world-atlas</a>
-    (<a href="https://github.com/topojson/world-atlas/blob/master/LICENSE">BSD 3-Clause</a>).
-  </p>
-</section>
+  <div class="step">
+    <div class="step-n">3</div>
+    <div>
+      <h3>Open DevTools</h3>
+      <p>Press <code>F12</code> on any tab and switch to the <strong>NetPhantom</strong> panel.</p>
+    </div>
+  </div>
+  <div class="step">
+    <div class="step-n">4</div>
+    <div>
+      <h3>Browse normally</h3>
+      <p>The graph builds itself in real time. Click any node to filter. Export with <code>↓ HAR</code>.</p>
+    </div>
+  </div>
+</div>
 
 <footer>
-  <p>NetPhantom &mdash; built with Canvas 2D, Chrome Extension MV3, and zero dependencies.</p>
-  <p style="margin-top:0.4rem;"><a href="https://github.com/forge-veil/netphantom">github.com/forge-veil/netphantom</a></p>
+  MIT License &mdash; IP data from <a href="https://db-ip.com">DB-IP Lite</a> (CC BY 4.0) &mdash; <a href="https://github.com/forge-veil/netphantom">github.com/forge-veil/netphantom</a>
 </footer>
 
 </body>
