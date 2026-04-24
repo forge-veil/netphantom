@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-'use strict';
 
 // Build script: downloads DB-IP Lite country IPv4 CSV and converts it to a
 // compact binary blob embedded in devtools/panel/geoip-data.js.
@@ -12,11 +11,14 @@
 // Attribution: DB-IP Lite data — https://db-ip.com (CC BY 4.0)
 // Distributed via: https://cdn.jsdelivr.net/npm/ip-location-db (sapics)
 
-const https  = require('https');
-const http   = require('http');
-const fs     = require('fs');
-const path   = require('path');
-const { Buffer } = require('buffer');
+import https  from 'https';
+import http   from 'http';
+import fs     from 'fs';
+import path   from 'path';
+import { Buffer } from 'buffer';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const CSV_URL   = 'https://cdn.jsdelivr.net/npm/@ip-location-db/dbip-country/dbip-country-ipv4.csv';
 const OUT_FILE  = path.join(__dirname, '..', 'devtools', 'panel', 'geoip-data.js');
