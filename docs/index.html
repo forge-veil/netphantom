@@ -126,9 +126,9 @@
     .hdr-val.redacted { color: var(--amber); }
 
     /* ── World map panel ── */
-    .map-frame { background: #05070e; position: relative; line-height: 0; }
-    .map-frame svg { display: block; width: 100%; height: auto; }
-    .map-legend { position: absolute; bottom: 8px; right: 10px; display: flex; align-items: center; gap: 8px; font-size: 8.5px; color: var(--text3); }
+    .map-wrap { position: relative; line-height: 0; }
+    .map-wrap canvas { display: block; width: 100%; }
+    .map-legend { position: absolute; bottom: 8px; right: 10px; display: flex; align-items: center; gap: 8px; font-size: 8.5px; color: var(--text3); pointer-events: none; }
     .ml-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 2px; vertical-align: middle; }
 
     /* ── Section labels ── */
@@ -399,86 +399,14 @@
   <!-- World map + Sidebar row -->
   <div class="frame-row">
 
-    <!-- World map -->
+    <!-- World map (rendered via canvas + TopoJSON — same pipeline as the extension) -->
     <div class="frame">
       <div class="p-toolbar" style="padding:5px 10px;">
         <span style="font-size:10px;color:var(--text2)">◉ World Map</span>
-        <span style="margin-left:auto;font-size:9px;color:var(--text3)">7 servers geolocated</span>
+        <span style="margin-left:auto;font-size:9px;color:var(--text3)">6 servers geolocated</span>
       </div>
-      <div class="map-frame">
-        <svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <linearGradient id="ocean" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#05070e"/>
-              <stop offset="100%" stop-color="#070f1c"/>
-            </linearGradient>
-            <filter id="dot-glow">
-              <feGaussianBlur stdDeviation="2.5" result="blur"/>
-              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-            </filter>
-          </defs>
-          <rect width="640" height="300" fill="url(#ocean)"/>
-
-          <!-- Graticule -->
-          <line x1="0" y1="100" x2="640" y2="100" stroke="rgba(255,255,255,0.028)" stroke-width="0.5"/>
-          <line x1="0" y1="150" x2="640" y2="150" stroke="rgba(255,255,255,0.05)" stroke-dasharray="3,8" stroke-width="0.8"/>
-          <line x1="0" y1="200" x2="640" y2="200" stroke="rgba(255,255,255,0.028)" stroke-width="0.5"/>
-          <line x1="160" y1="0" x2="160" y2="300" stroke="rgba(255,255,255,0.028)" stroke-width="0.5"/>
-          <line x1="320" y1="0" x2="320" y2="300" stroke="rgba(255,255,255,0.028)" stroke-width="0.5"/>
-          <line x1="480" y1="0" x2="480" y2="300" stroke="rgba(255,255,255,0.028)" stroke-width="0.5"/>
-
-          <!-- Continent fills (simplified) -->
-          <!-- North America -->
-          <path d="M 40,62 L 82,48 L 128,52 L 158,62 L 172,92 L 192,105 L 200,132 L 182,158 L 162,168 L 138,162 L 112,155 L 88,152 L 68,138 L 50,112 L 36,88 Z" fill="#0c1626" stroke="rgba(50,105,200,0.2)" stroke-width="0.4"/>
-          <!-- South America -->
-          <path d="M 142,168 L 178,162 L 210,172 L 222,198 L 218,238 L 202,268 L 172,280 L 148,262 L 138,232 L 132,195 Z" fill="#0c1626" stroke="rgba(50,105,200,0.2)" stroke-width="0.4"/>
-          <!-- Europe -->
-          <path d="M 284,58 L 312,46 L 352,48 L 368,62 L 358,82 L 336,92 L 308,88 L 284,72 Z" fill="#0c1626" stroke="rgba(50,105,200,0.2)" stroke-width="0.4"/>
-          <!-- Africa -->
-          <path d="M 274,102 L 312,94 L 352,98 L 362,138 L 358,188 L 332,238 L 295,248 L 268,212 L 262,168 L 272,128 Z" fill="#0c1626" stroke="rgba(50,105,200,0.2)" stroke-width="0.4"/>
-          <!-- Asia -->
-          <path d="M 348,48 L 382,38 L 445,42 L 502,48 L 562,58 L 582,82 L 568,128 L 522,152 L 462,158 L 398,148 L 368,118 L 342,88 Z" fill="#0c1626" stroke="rgba(50,105,200,0.2)" stroke-width="0.4"/>
-          <!-- Australia -->
-          <path d="M 518,192 L 562,188 L 578,212 L 568,248 L 538,256 L 504,242 L 494,218 Z" fill="#0c1626" stroke="rgba(50,105,200,0.2)" stroke-width="0.4"/>
-
-          <!-- Arced edges from browser origin (San Francisco ~98,90) -->
-          <!-- to New York (~182,85) -->
-          <path d="M 98,90 Q 140,62 182,85" stroke="#34c759" stroke-width="0.85" opacity="0.28"/>
-          <!-- to London (~318,65) -->
-          <path d="M 98,90 Q 208,30 318,65" stroke="#34c759" stroke-width="0.85" opacity="0.28"/>
-          <!-- to Frankfurt (~333,68) -->
-          <path d="M 98,90 Q 215,28 333,68" stroke="#34c759" stroke-width="0.85" opacity="0.28"/>
-          <!-- to Singapore (~502,155) -->
-          <path d="M 98,90 Q 300,52 502,155" stroke="#ff9f0a" stroke-width="0.85" opacity="0.28"/>
-          <!-- to Tokyo (~568,92) -->
-          <path d="M 98,90 Q 333,42 568,92" stroke="#ff453a" stroke-width="0.85" opacity="0.28"/>
-          <!-- to Sao Paulo (~175,235) -->
-          <path d="M 98,90 Q 136,162 175,235" stroke="#34c759" stroke-width="0.85" opacity="0.28"/>
-
-          <!-- Browser origin dot (purple ring) -->
-          <circle cx="98" cy="90" r="8" stroke="#a78bfa" stroke-width="1.5" fill="none" opacity="0.85" filter="url(#dot-glow)"/>
-          <circle cx="98" cy="90" r="3" fill="#fff" opacity="0.95"/>
-
-          <!-- Server dots -->
-          <!-- New York — green -->
-          <circle cx="182" cy="85" r="5" fill="#34c759" opacity="0.5" filter="url(#dot-glow)"/>
-          <circle cx="180" cy="83" r="2" fill="#fff" opacity="0.85"/>
-          <!-- London — green -->
-          <circle cx="318" cy="65" r="5" fill="#34c759" opacity="0.5" filter="url(#dot-glow)"/>
-          <circle cx="316" cy="63" r="2" fill="#fff" opacity="0.85"/>
-          <!-- Frankfurt — green -->
-          <circle cx="333" cy="68" r="5" fill="#34c759" opacity="0.5"/>
-          <circle cx="331" cy="66" r="2" fill="#fff" opacity="0.85"/>
-          <!-- Singapore — amber -->
-          <circle cx="502" cy="155" r="6" fill="#ff9f0a" opacity="0.5" filter="url(#dot-glow)"/>
-          <circle cx="500" cy="153" r="2.5" fill="#fff" opacity="0.85"/>
-          <!-- Tokyo — red -->
-          <circle cx="568" cy="92" r="6" fill="#ff453a" opacity="0.5" filter="url(#dot-glow)"/>
-          <circle cx="566" cy="90" r="2.5" fill="#fff" opacity="0.85"/>
-          <!-- Sao Paulo — green -->
-          <circle cx="175" cy="235" r="5" fill="#34c759" opacity="0.5"/>
-          <circle cx="173" cy="233" r="2" fill="#fff" opacity="0.85"/>
-        </svg>
+      <div class="map-wrap">
+        <canvas id="docs-map"></canvas>
         <div class="map-legend">
           <span><span class="ml-dot" style="background:#34c759"></span>2xx</span>
           <span><span class="ml-dot" style="background:#ff9f0a"></span>4xx</span>
@@ -571,5 +499,164 @@
   MIT License &mdash; IP data from <a href="https://db-ip.com">DB-IP Lite</a> (CC BY 4.0) &mdash; <a href="https://github.com/forge-veil/netphantom">github.com/forge-veil/netphantom</a>
 </footer>
 
+<script>
+(function () {
+  const canvas = document.getElementById('docs-map');
+  const ctx    = canvas.getContext('2d');
+  const dpr    = Math.min(window.devicePixelRatio || 1, 2);
+
+  let W = 0, H = 0, _arcs = null, _topo = null;
+
+  // Dummy data: browser origin + 6 servers
+  const ORIGIN  = { lat: 37.77, lng: -122.42 };
+  const SERVERS = [
+    { lat: 40.71, lng:  -74.01, s: 200 },   // New York
+    { lat: 51.51, lng:   -0.13, s: 200 },   // London
+    { lat: 50.11, lng:    8.68, s: 200 },   // Frankfurt
+    { lat:  1.35, lng:  103.82, s: 429 },   // Singapore
+    { lat: 35.69, lng:  139.69, s: 500 },   // Tokyo
+    { lat:-23.55, lng:  -46.63, s: 200 },   // São Paulo
+  ];
+
+  function proj(lng, lat) {
+    let pw, ph, ox, oy;
+    if (W / H >= 2) { ph = H; pw = H * 2; ox = (W - pw) / 2; oy = 0; }
+    else            { pw = W; ph = W / 2; ox = 0; oy = (H - ph) / 2; }
+    return [ox + (lng + 180) / 360 * pw, oy + (90 - lat) / 180 * ph];
+  }
+
+  function statusColor(s) {
+    if (!s || s >= 500) return '#ff453a';
+    if (s >= 400)       return '#ff9f0a';
+    return '#34c759';
+  }
+
+  function buildPaths() {
+    const out = [];
+    for (const geo of _topo.objects.countries.geometries) {
+      const p = new Path2D();
+      const polys = geo.type === 'Polygon' ? [geo.arcs] : geo.arcs;
+      for (const rings of polys) {
+        for (const ring of rings) {
+          let first = true;
+          for (const i of ring) {
+            const arc = i >= 0 ? _arcs[i] : [..._arcs[~i]].reverse();
+            for (const [lng, lat] of arc) {
+              const [x, y] = proj(lng, lat);
+              if (first) { p.moveTo(x, y); first = false; } else p.lineTo(x, y);
+            }
+          }
+          p.closePath();
+        }
+      }
+      out.push(p);
+    }
+    return out;
+  }
+
+  function draw() {
+    if (!W || !H) return;
+    ctx.save();
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, W, H);
+
+    // Ocean
+    const bg = ctx.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, '#05070e'); bg.addColorStop(1, '#070f1c');
+    ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+
+    // Graticule
+    ctx.strokeStyle = 'rgba(255,255,255,0.028)'; ctx.lineWidth = 0.5;
+    [-60,-30,30,60].forEach(lat => {
+      const [, py] = proj(0, lat);
+      ctx.beginPath(); ctx.moveTo(0, py); ctx.lineTo(W, py); ctx.stroke();
+    });
+    [-120,-60,0,60,120,180].forEach(lng => {
+      const [px] = proj(lng, 0);
+      ctx.beginPath(); ctx.moveTo(px, 0); ctx.lineTo(px, H); ctx.stroke();
+    });
+
+    // Countries
+    if (_topo && _arcs) {
+      const paths = buildPaths();
+      ctx.fillStyle = '#0c1626';
+      for (const p of paths) ctx.fill(p);
+      ctx.strokeStyle = 'rgba(50,105,200,0.2)'; ctx.lineWidth = 0.4;
+      for (const p of paths) ctx.stroke(p);
+    }
+
+    // Equator dashes
+    { const [, eq] = proj(0, 0);
+      ctx.save(); ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+      ctx.lineWidth = 0.8; ctx.setLineDash([3, 8]);
+      ctx.beginPath(); ctx.moveTo(0, eq); ctx.lineTo(W, eq); ctx.stroke();
+      ctx.setLineDash([]); ctx.restore(); }
+
+    // Edges from origin to servers
+    const [ox, oy] = proj(ORIGIN.lng, ORIGIN.lat);
+    for (const sv of SERVERS) {
+      const [sx, sy] = proj(sv.lng, sv.lat);
+      const dist = Math.hypot(sx - ox, sy - oy);
+      const mx = (ox + sx) / 2, my = (oy + sy) / 2 - dist * 0.22;
+      ctx.save();
+      ctx.strokeStyle = statusColor(sv.s); ctx.globalAlpha = 0.28;
+      ctx.lineWidth = 0.85; ctx.shadowBlur = 5; ctx.shadowColor = statusColor(sv.s);
+      ctx.beginPath(); ctx.moveTo(ox, oy); ctx.quadraticCurveTo(mx, my, sx, sy); ctx.stroke();
+      ctx.restore();
+    }
+
+    // Server dots
+    for (const sv of SERVERS) {
+      const [px, py] = proj(sv.lng, sv.lat);
+      const c = statusColor(sv.s), r = 3.5;
+      ctx.save();
+      ctx.globalAlpha = 0.18; ctx.shadowBlur = 24; ctx.shadowColor = c; ctx.fillStyle = c;
+      ctx.beginPath(); ctx.arc(px, py, r * 2.2, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = 0.5; ctx.shadowBlur = 10;
+      ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = 0.88; ctx.shadowBlur = 4; ctx.shadowColor = '#fff'; ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.arc(px - r * 0.12, py - r * 0.18, r * 0.4, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
+
+    // Origin — purple ring + white core
+    ctx.save();
+    ctx.strokeStyle = '#a78bfa'; ctx.globalAlpha = 0.9; ctx.lineWidth = 1.5;
+    ctx.shadowBlur = 14; ctx.shadowColor = '#a78bfa';
+    ctx.beginPath(); ctx.arc(ox, oy, 7, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = '#fff'; ctx.globalAlpha = 0.95; ctx.shadowBlur = 6; ctx.shadowColor = '#fff';
+    ctx.beginPath(); ctx.arc(ox, oy, 3, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+
+    ctx.restore();
+  }
+
+  function resize() {
+    const lw = canvas.parentElement.clientWidth || 600;
+    const lh = Math.round(lw * 0.48);
+    W = lw; H = lh;
+    canvas.width  = Math.round(lw * dpr);
+    canvas.height = Math.round(lh * dpr);
+    canvas.style.width  = lw + 'px';
+    canvas.style.height = lh + 'px';
+    draw();
+  }
+
+  resize();
+  window.addEventListener('resize', resize);
+
+  fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
+    .then(r => r.json())
+    .then(topo => {
+      _topo = topo;
+      const [sx, sy] = topo.transform.scale, [tx, ty] = topo.transform.translate;
+      _arcs = topo.arcs.map(arc => {
+        let x = 0, y = 0;
+        return arc.map(([dx, dy]) => { x += dx; y += dy; return [x * sx + tx, y * sy + ty]; });
+      });
+      draw();
+    });
+})();
+</script>
 </body>
 </html>
