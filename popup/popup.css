@@ -1,0 +1,82 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  width: 280px;
+  background: #090914;
+  color: #dde4ff;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 12px;
+  -webkit-font-smoothing: antialiased;
+}
+
+#popup { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #9f7aea;
+  text-shadow: 0 0 12px #7c3aed;
+  letter-spacing: 0.05em;
+  flex: 1;
+}
+.version { color: #3a3f6a; font-size: 10px; }
+
+.desc {
+  font-size: 11px;
+  color: #7880a8;
+  line-height: 1.6;
+  border-left: 2px solid #7c3aed;
+  padding-left: 10px;
+}
+.desc strong { color: #9f7aea; }
+
+.how-to { display: flex; flex-direction: column; gap: 6px; }
+.step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: #7880a8;
+}
+.step strong { color: #dde4ff; }
+.step-num {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: #7c3aed;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.tip-box {
+  background: #141428;
+  border: 1px solid #1e1e3e;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 10px;
+  color: #7880a8;
+  line-height: 1.6;
+  min-height: 36px;
+}
+.tip-label {
+  color: #ffbb00;
+  font-weight: 700;
+  margin-right: 4px;
+}
+
+.footer {
+  font-size: 9px;
+  color: #3a3f6a;
+  text-align: center;
+  border-top: 1px solid #1e1e3e;
+  padding-top: 10px;
+}

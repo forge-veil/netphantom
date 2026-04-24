@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>NetPhantom</title>
+  <link rel="stylesheet" href="panel.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- ── Toolbar ─────────────────────────────────────────────────────────── -->
+  <div id="toolbar">
+    <div class="logo">
+      <svg class="logo-icon" viewBox="0 0 20 20" fill="none">
+        <circle cx="10" cy="10" r="3" fill="#9f7aea"/>
+        <circle cx="3"  cy="5"  r="2" fill="#00ff88"/>
+        <circle cx="17" cy="5"  r="2" fill="#00ff88"/>
+        <circle cx="3"  cy="15" r="2" fill="#00ccff"/>
+        <circle cx="17" cy="15" r="2" fill="#ffbb00"/>
+        <line x1="10" y1="10" x2="3"  y2="5"  stroke="#7c3aed" stroke-width="1"/>
+        <line x1="10" y1="10" x2="17" y2="5"  stroke="#7c3aed" stroke-width="1"/>
+        <line x1="10" y1="10" x2="3"  y2="15" stroke="#7c3aed" stroke-width="1"/>
+        <line x1="10" y1="10" x2="17" y2="15" stroke="#7c3aed" stroke-width="1"/>
+      </svg>
+      NetPhantom
+    </div>
+    <span class="chip recording" id="rec-chip">LIVE</span>
+    <button class="btn" id="btn-pause" title="Pause capture">⏸ Pause</button>
+    <button class="btn danger" id="btn-clear" title="Clear all data">⊗ Clear</button>
+    <div class="sep"></div>
+    <button class="btn" id="btn-insights" title="AI Insights">✦ Insights</button>
+    <button class="btn" id="btn-map" title="World map">◉ Map</button>
+    <button class="btn" id="btn-export" title="Export as HAR">↓ HAR</button>
+  </div>
+
+  <!-- ── Page navigation bar ──────────────────────────────────────────────── -->
+  <div id="nav-bar">
+    <button class="nav-tab" id="nav-session-tab" title="All traffic across navigations">
+      <span class="nav-tab-label">Session</span>
+    </button>
+    <div id="nav-pages">
+      <!-- Archived page tabs injected by JS on each navigation -->
+    </div>
+    <div class="nav-tab active" id="nav-current-tab">
+      <span class="nav-live-dot"></span>
+      <span class="nav-tab-label" id="nav-current-label">—</span>
+      <span class="nav-refresh-badge" id="nav-refresh-badge" style="display:none"></span>
+      <span class="nav-tab-count" id="nav-current-count">0</span>
+    </div>
+  </div>
+
+  <!-- ── Main ──────────────────────────────────────────────────────────────── -->
+  <div id="main">
+
+    <!-- Left column: graph + request table -->
+    <div id="main-left">
+
+      <!-- Restore bar: appears when the graph/map row is collapsed -->
+      <div class="restore-bar" id="graph-restore-bar">
+        <span>◈ Graph &amp; Map</span>
+        <button class="restore-btn" id="restore-graph-btn">expand</button>
+      </div>
+
+      <!-- Graph canvas + World map (side-by-side, map hidden by default) -->
+      <div id="upper">
+        <div id="canvas-wrap">
+          <canvas id="graph-canvas"></canvas>
+          <div id="tooltip"></div>
+          <div id="empty-hint" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;">
+            <div style="text-align:center;color:#3a3f6a;font-size:12px;line-height:2;">
+              <div style="font-size:32px;margin-bottom:8px;opacity:0.4">◎</div>
+              Waiting for network requests…<br>
+              <span style="font-size:10px">Navigate the inspected page to see the graph</span>
+            </div>
+          </div>
+          <!-- Filter pill: appears when a graph node is selected -->
+          <div id="node-filter-pill">
+            <span id="node-filter-label"></span>
+            <button id="node-filter-clear" title="Clear domain filter">✕</button>
+          </div>
+          <button class="pane-x" id="close-graph-btn" title="Collapse graph &amp; map">✕</button>
+        </div>
+        <!-- Vertical resize handle between graph and map -->
+        <div id="map-resize-handle"></div>
+        <!-- World map panel -->
+        <div id="map-panel">
+          <canvas id="map-canvas"></canvas>
+          <div id="map-tooltip"></div>
+          <button class="pane-x" id="close-map-btn" title="Close map">✕</button>
+          <div id="map-legend">
+            <span class="map-legend-dot" style="background:#34c759"></span><span>2xx</span>
+            <span class="map-legend-dot" style="background:#ff9f0a"></span><span>4xx</span>
+            <span class="map-legend-dot" style="background:#ff453a"></span><span>5xx/err</span>
+          </div>
+          <div id="map-empty">
+            <div style="font-size:28px;opacity:0.3">◎</div>
+            <div>Geolocating requests…</div>
+            <div style="font-size:10px;opacity:0.6">Server IPs are resolved as requests arrive</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Horizontal resize handle (drag to resize request table height) -->
+      <div id="h-resize-handle"></div>
+
+      <!-- Bottom request table -->
+      <div id="requests-bar">
+        <div id="req-bar-header">
+          <div id="type-filter-bar">
+            <button class="type-btn active" data-type="">All</button>
+            <button class="type-btn" data-type="fetch">Fetch/XHR</button>
+            <button class="type-btn" data-type="document">Doc</button>
+            <button class="type-btn" data-type="stylesheet">CSS</button>
+            <button class="type-btn" data-type="script">JS</button>
+            <button class="type-btn" data-type="font">Font</button>
+            <button class="type-btn" data-type="image">Img</button>
+            <button class="type-btn" data-type="websocket">WS</button>
+            <button class="type-btn" data-type="other">Other</button>
+            <div class="type-filter-sep"></div>
+            <span id="req-bar-count">0 requests</span>
+            <button class="pane-x pane-x-inline" id="close-table-btn" title="Collapse request table">✕</button>
+          </div>
+          <div id="req-bar-search-row">
+            <input type="text" id="req-search" placeholder="Filter by URL…">
+          </div>
+        </div>
+        <div id="req-bar-table-wrap">
+          <table class="req-table">
+            <thead>
+              <tr>
+                <th class="col-status">Status</th>
+                <th class="col-method">Method</th>
+                <th class="col-domain">Domain</th>
+                <th class="col-path">Path</th>
+                <th class="col-type">Type</th>
+                <th class="col-size">Size</th>
+                <th class="col-ms">Time</th>
+              </tr>
+            </thead>
+            <tbody id="req-tbody"></tbody>
+          </table>
+        </div>
+        <!-- Restore bar: appears when table body is collapsed -->
+        <div class="restore-bar restore-bar-inline" id="table-restore-bar">
+          <span>≡ Requests</span>
+          <button class="restore-btn" id="restore-table-btn">expand</button>
+        </div>
+      </div>
+
+    </div><!-- #main-left -->
+
+    <!-- Drawer resize handle + sidebar (hidden until a request is selected) -->
+    <div id="resize-handle"></div>
+
+    <!-- Details sidebar — full-height drawer -->
+    <div id="sidebar">
+      <button class="pane-x" id="close-sidebar-btn" title="Close panel">✕</button>
+
+      <!-- Request details (shown when a row is clicked) -->
+      <div id="sb-request">
+
+        <!-- Request header strip -->
+        <div id="req-detail-header">
+          <div class="rq-meta-row">
+            <span class="method-badge" id="rq-method">GET</span>
+            <span class="rq-status" id="rq-status-text">200</span>
+            <div style="flex:1"></div>
+            <button class="btn" id="btn-curl" title="Copy as cURL">⧉ cURL</button>
+          </div>
+          <div class="rq-url" id="rq-url"></div>
+          <div class="rq-stats-row">
+            <span class="rq-domain" id="rq-domain"></span>
+            <span class="rq-sep">·</span>
+            <span id="rq-size"></span>
+            <span class="rq-sep">·</span>
+            <span id="rq-dur"></span>
+          </div>
+        </div>
+
+        <!-- Tabs -->
+        <div id="sidebar-tabs">
+          <button class="tab-btn" data-tab="params">Params</button>
+          <button class="tab-btn active" data-tab="headers">Headers</button>
+          <button class="tab-btn" data-tab="timing">Timing</button>
+          <button class="tab-btn" data-tab="security">Security</button>
+        </div>
+
+        <div class="tab-pane" id="tab-params">
+          <div id="params-content"></div>
+        </div>
+        <div class="tab-pane active" id="tab-headers">
+          <div id="headers-content"></div>
+        </div>
+        <div class="tab-pane" id="tab-timing">
+          <div id="timing-content"></div>
+        </div>
+        <div class="tab-pane" id="tab-security">
+          <div id="ssl-inspector-content"></div>
+        </div>
+
+      </div>
+
+      <!-- Insights view (toggled by toolbar button) -->
+      <div id="sb-insights">
+        <div class="no-insights" id="insights-empty">
+          <div style="font-size:24px">✦</div>
+          <div>No anomalies detected yet.<br>Keep browsing…</div>
+        </div>
+        <div id="insights-list"></div>
+      </div>
+
+    </div><!-- #sidebar -->
+
+  </div><!-- #main -->
+
+  <!-- ── Status bar ───────────────────────────────────────────────────────── -->
+  <div id="statusbar">
+    <span class="stat-item stat-clickable" id="stat-item-reqs" title="Clear all filters"><span class="dot" style="background:var(--green)"></span><span id="stat-reqs">0 requests</span></span>
+    <span class="stat-item"><span class="dot" style="background:var(--sky)"></span><span id="stat-domains">0 origins</span></span>
+    <span class="stat-item stat-clickable" id="stat-item-avg" title="Sort by duration"><span class="dot" style="background:var(--amber)"></span><span id="stat-avg">avg —</span></span>
+    <span class="stat-item stat-clickable" id="stat-item-errors" title="Show errors only"><span class="dot" style="background:var(--red)"></span><span id="stat-errors">0 errors</span></span>
+    <div class="sep"></div>
+    <span id="stat-page" style="color:var(--text-3);font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:300px;"></span>
+  </div>
+
+</div><!-- #app -->
+
+
+<script src="graph.js?v=35"></script>
+<script src="annotations.js?v=34"></script>
+<script src="worldmap.js?v=4"></script>
+<script src="geoip-data.js"></script>
+<script src="panel.js?v=45"></script>
+</body>
+</html>

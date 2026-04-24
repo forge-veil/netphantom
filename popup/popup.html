@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>NetPhantom</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+<div id="popup">
+  <div class="header">
+    <svg width="22" height="22" viewBox="0 0 20 20" fill="none">
+      <circle cx="10" cy="10" r="3.5" fill="#9f7aea"/>
+      <circle cx="3"  cy="5"  r="2.2" fill="#00ff88"/>
+      <circle cx="17" cy="5"  r="2.2" fill="#00ff88"/>
+      <circle cx="3"  cy="15" r="2.2" fill="#00ccff"/>
+      <circle cx="17" cy="15" r="2.2" fill="#ffbb00"/>
+      <line x1="10" y1="10" x2="3"  y2="5"  stroke="#7c3aed" stroke-width="1.2"/>
+      <line x1="10" y1="10" x2="17" y2="5"  stroke="#7c3aed" stroke-width="1.2"/>
+      <line x1="10" y1="10" x2="3"  y2="15" stroke="#7c3aed" stroke-width="1.2"/>
+      <line x1="10" y1="10" x2="17" y2="15" stroke="#7c3aed" stroke-width="1.2"/>
+    </svg>
+    <span class="title">NetPhantom</span>
+    <span class="version">v1.0</span>
+  </div>
+
+  <div class="desc">
+    Real-Time 3D Network Visualizer.<br>
+    Open <strong>DevTools → NetPhantom</strong> tab to see the graph.
+  </div>
+
+  <div class="how-to">
+    <div class="step"><span class="step-num">1</span>Open Chrome DevTools (F12)</div>
+    <div class="step"><span class="step-num">2</span>Click the <strong>NetPhantom</strong> tab</div>
+    <div class="step"><span class="step-num">3</span>Browse — watch the 3D graph grow</div>
+  </div>
+
+  <div class="tip-box" id="tip"></div>
+
+  <div class="footer">
+    <span>Drag to orbit · Scroll to zoom · Click node for details</span>
+  </div>
+</div>
+<script src="popup.js"></script>
+</body>
+</html>

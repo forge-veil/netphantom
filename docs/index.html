@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NetPhantom — Real-Time Network Visualizer for Chrome</title>
+  <meta name="description" content="See every network request a page makes as a live 3D force-graph and world map, right inside Chrome DevTools.">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #07090f;
+      --bg2:      #0d1117;
+      --border:   rgba(255,255,255,0.07);
+      --purple:   #9f7aea;
+      --purple2:  #7c3aed;
+      --green:    #00ff88;
+      --sky:      #00ccff;
+      --amber:    #ffbb00;
+      --text:     #e2e8f0;
+      --text2:    #94a3b8;
+      --text3:    #475569;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    a { color: var(--purple); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ── Nav ───────────────────────────────────────────────────── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; gap: 2rem;
+      padding: 0.75rem 2rem;
+      background: rgba(7,9,15,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo {
+      display: flex; align-items: center; gap: 0.5rem;
+      font-weight: 700; font-size: 1rem; color: var(--text);
+    }
+    .nav-links { display: flex; gap: 1.5rem; margin-left: auto; }
+    .nav-links a { font-size: 0.875rem; color: var(--text2); }
+    .nav-links a:hover { color: var(--text); text-decoration: none; }
+    .nav-cta {
+      padding: 0.4rem 1rem;
+      background: var(--purple2);
+      color: #fff !important;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+    .nav-cta:hover { background: var(--purple); text-decoration: none !important; }
+
+    /* ── Sections ──────────────────────────────────────────────── */
+    section { padding: 5rem 2rem; max-width: 900px; margin: 0 auto; }
+
+    /* ── Hero ──────────────────────────────────────────────────── */
+    #hero {
+      text-align: center;
+      padding-top: 7rem;
+      padding-bottom: 5rem;
+      max-width: 760px;
+    }
+    .hero-badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border: 1px solid rgba(159,122,234,0.35);
+      border-radius: 99px;
+      font-size: 0.75rem;
+      color: var(--purple);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+    }
+    h1 {
+      font-size: clamp(2rem, 5vw, 3.25rem);
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      margin-bottom: 1.25rem;
+    }
+    h1 span { color: var(--purple); }
+    .hero-sub {
+      font-size: 1.125rem;
+      color: var(--text2);
+      max-width: 560px;
+      margin: 0 auto 2.5rem;
+    }
+    .btn-row { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .btn {
+      padding: 0.65rem 1.5rem;
+      border-radius: 8px;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+    }
+    .btn-primary { background: var(--purple2); color: #fff; }
+    .btn-primary:hover { background: var(--purple); text-decoration: none; }
+    .btn-secondary {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { border-color: var(--purple); text-decoration: none; }
+
+    /* ── Logo SVG ──────────────────────────────────────────────── */
+    .hero-logo {
+      width: 80px; height: 80px;
+      margin: 0 auto 2rem;
+    }
+
+    /* ── Feature grid ──────────────────────────────────────────── */
+    h2 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.01em;
+    }
+    .section-lead {
+      color: var(--text2);
+      margin-bottom: 2.5rem;
+      font-size: 1rem;
+    }
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1rem;
+    }
+    .feature-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem 1.5rem;
+    }
+    .feature-card h3 { font-size: 0.95rem; font-weight: 600; margin-bottom: 0.35rem; }
+    .feature-card p { font-size: 0.85rem; color: var(--text2); line-height: 1.55; }
+    .feature-icon { font-size: 1.25rem; margin-bottom: 0.6rem; }
+
+    /* ── Architecture ──────────────────────────────────────────── */
+    #architecture pre {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.5rem;
+      font-size: 0.8rem;
+      color: var(--text2);
+      overflow-x: auto;
+      line-height: 1.7;
+    }
+
+    /* ── Install steps ─────────────────────────────────────────── */
+    .steps { counter-reset: step; display: flex; flex-direction: column; gap: 1rem; }
+    .step {
+      counter-increment: step;
+      display: grid;
+      grid-template-columns: 2rem 1fr;
+      gap: 1rem;
+      align-items: start;
+    }
+    .step-num {
+      width: 2rem; height: 2rem;
+      border-radius: 50%;
+      background: var(--purple2);
+      color: #fff;
+      font-size: 0.8rem;
+      font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .step h3 { font-size: 0.95rem; font-weight: 600; margin-bottom: 0.2rem; }
+    .step p, .step code { font-size: 0.875rem; color: var(--text2); }
+    code {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      background: rgba(255,255,255,0.07);
+      padding: 0.1em 0.4em;
+      border-radius: 4px;
+      font-size: 0.85em;
+      color: var(--text);
+    }
+
+    /* ── Privacy block ─────────────────────────────────────────── */
+    .privacy-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 1rem;
+    }
+    .privacy-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem;
+      font-size: 0.875rem;
+    }
+    .privacy-card strong { display: block; margin-bottom: 0.3rem; color: var(--green); }
+    .privacy-card span { color: var(--text2); }
+
+    /* ── Permissions table ─────────────────────────────────────── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+    th, td { padding: 0.6rem 0.75rem; border-bottom: 1px solid var(--border); text-align: left; }
+    th { color: var(--text2); font-weight: 500; }
+    td:first-child { font-family: 'SF Mono', monospace; font-size: 0.8rem; color: var(--purple); }
+
+    /* ── Footer ────────────────────────────────────────────────── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2rem;
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--text3);
+    }
+    footer a { color: var(--text3); }
+    footer a:hover { color: var(--text2); }
+  </style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+  <div class="nav-logo">
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+      <circle cx="10" cy="10" r="3" fill="#9f7aea"/>
+      <circle cx="3"  cy="5"  r="2" fill="#00ff88"/>
+      <circle cx="17" cy="5"  r="2" fill="#00ff88"/>
+      <circle cx="3"  cy="15" r="2" fill="#00ccff"/>
+      <circle cx="17" cy="15" r="2" fill="#ffbb00"/>
+      <line x1="10" y1="10" x2="3"  y2="5"  stroke="#7c3aed" stroke-width="1"/>
+      <line x1="10" y1="10" x2="17" y2="5"  stroke="#7c3aed" stroke-width="1"/>
+      <line x1="10" y1="10" x2="3"  y2="15" stroke="#7c3aed" stroke-width="1"/>
+      <line x1="10" y1="10" x2="17" y2="15" stroke="#7c3aed" stroke-width="1"/>
+    </svg>
+    NetPhantom
+  </div>
+  <div class="nav-links">
+    <a href="#features">Features</a>
+    <a href="#architecture">Architecture</a>
+    <a href="#install">Install</a>
+    <a href="#privacy">Privacy</a>
+    <a href="https://github.com/forge-veil/netphantom" class="nav-cta">GitHub</a>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section id="hero">
+  <svg class="hero-logo" viewBox="0 0 80 80" fill="none">
+    <circle cx="40" cy="40" r="12" fill="#9f7aea" opacity="0.9"/>
+    <circle cx="12" cy="20" r="8"  fill="#00ff88"/>
+    <circle cx="68" cy="20" r="8"  fill="#00ff88"/>
+    <circle cx="12" cy="60" r="8"  fill="#00ccff"/>
+    <circle cx="68" cy="60" r="8"  fill="#ffbb00"/>
+    <line x1="40" y1="40" x2="12" y2="20" stroke="#7c3aed" stroke-width="2.5"/>
+    <line x1="40" y1="40" x2="68" y2="20" stroke="#7c3aed" stroke-width="2.5"/>
+    <line x1="40" y1="40" x2="12" y2="60" stroke="#7c3aed" stroke-width="2.5"/>
+    <line x1="40" y1="40" x2="68" y2="60" stroke="#7c3aed" stroke-width="2.5"/>
+  </svg>
+  <div class="hero-badge">Chrome DevTools Extension</div>
+  <h1>See the <span>network graph</span> behind any website</h1>
+  <p class="hero-sub">
+    NetPhantom visualises every request a page makes as a live force-directed graph,
+    a geolocated world map, and a filterable request table — all inside Chrome DevTools.
+    No data ever leaves your browser.
+  </p>
+  <div class="btn-row">
+    <a href="#install" class="btn btn-primary">Install extension</a>
+    <a href="https://github.com/forge-veil/netphantom" class="btn btn-secondary">View on GitHub</a>
+  </div>
+</section>
+
+<!-- Features -->
+<section id="features">
+  <h2>Everything you need to understand network traffic</h2>
+  <p class="section-lead">All views are live, interactive, and filter each other.</p>
+  <div class="feature-grid">
+    <div class="feature-card">
+      <div class="feature-icon">◈</div>
+      <h3>3D Force Graph</h3>
+      <p>Nodes are origins, edges are cross-origin calls. Orbit in 3D, zoom, drag nodes. Click a node to filter all other views to that domain.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">◉</div>
+      <h3>World Map</h3>
+      <p>Server IPs are geolocated to country-level dots with arced edges from the page origin. Hover for hostname and request stats. Click to filter.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">≡</div>
+      <h3>Request Table</h3>
+      <p>Filter by request type (Fetch/XHR, JS, CSS, Image, WebSocket, …) or by URL substring. Click any row to open the detail sidebar.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">⊞</div>
+      <h3>Detail Sidebar</h3>
+      <p>Per-request tabs: query params, request and response headers, timing waterfall, and full TLS/SSL certificate details.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">✦</div>
+      <h3>AI Insights</h3>
+      <p>Automatically flags anomalies: rate limit responses, slow endpoints, unusually large payloads, and high server error rates.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">↓</div>
+      <h3>HAR Export</h3>
+      <p>Export the full captured session as a standard <code>.har</code> file — compatible with any HAR viewer or performance tool.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">⬡</div>
+      <h3>Request Mocking</h3>
+      <p>Intercept any request by URL pattern and return a custom status code, headers, and JSON body without touching the server.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">⏸</div>
+      <h3>Session History</h3>
+      <p>Each page navigation creates a snapshot tab. Switch between them to compare traffic across navigations in the same session.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Architecture -->
+<section id="architecture">
+  <h2>How it works</h2>
+  <p class="section-lead">Two independent capture paths feed a single panel through the service worker.</p>
+  <pre>
+Browser tab
+  └─ content/interceptor.js     wraps fetch / XHR / WebSocket
+                                fires CONTENT_REQUEST → service worker (real-time)
+
+DevTools page  (devtools/devtools.js)
+  └─ chrome.devtools.network    onRequestFinished → full headers, timing, TLS, serverIP
+  └─ chrome.devtools.network    onNavigated → triggers per-page snapshot
+
+Service worker  (background/service-worker.js)
+  ├─ chrome.webRequest          caches real HTTP status codes (fixes devtools status:0 bug)
+  ├─ port devtools-{tabId}      receives events from devtools.js; buffers up to 300
+  ├─ port panel-{tabId}         flushes buffer on connect; forwards live events
+  └─ mock rules                 CHECK_MOCK / SET_MOCK / REMOVE_MOCK / GET_MOCKS
+
+Panel  (devtools/panel/)
+  ├─ panel.js                   main controller: graph, map, table, sidebar, filters
+  ├─ graph.js                   3D force-directed canvas renderer
+  ├─ worldmap.js                equirectangular canvas map (TopoJSON country outlines)
+  ├─ geoip-data.js              offline IP→country lookup — generated binary, no API calls
+  └─ annotations.js             AI anomaly detection</pre>
+</section>
+
+<!-- Install -->
+<section id="install">
+  <h2>Installation</h2>
+  <p class="section-lead">No build step required. Load the folder directly into Chrome.</p>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div>
+        <h3>Clone the repository</h3>
+        <p><code>git clone https://github.com/forge-veil/netphantom.git</code></p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div>
+        <h3>Open the Extensions page</h3>
+        <p>Navigate to <code>chrome://extensions</code> and enable <strong>Developer mode</strong> with the toggle in the top-right corner.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div>
+        <h3>Load unpacked</h3>
+        <p>Click <strong>Load unpacked</strong> and select the cloned repo folder.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div>
+        <h3>Open DevTools</h3>
+        <p>Press <code>F12</code> on any tab and select the <strong>NetPhantom</strong> panel. Browse normally and watch the graph build itself.</p>
+      </div>
+    </div>
+  </div>
+
+  <br>
+  <h3 style="font-size:1rem; margin-bottom:0.5rem; margin-top:1.5rem;">Refresh the geo database (optional)</h3>
+  <p style="font-size:0.875rem; color:var(--text2);">
+    The bundled <code>geoip-data.js</code> was generated from DB-IP Lite at release time.
+    To update it to the latest monthly snapshot:
+  </p>
+  <pre style="margin-top:0.75rem; background:var(--bg2); border:1px solid var(--border); border-radius:8px; padding:1rem; font-size:0.8rem; color:var(--text2);">node tools/build-geoip.js</pre>
+</section>
+
+<!-- Privacy -->
+<section id="privacy">
+  <h2>Privacy</h2>
+  <p class="section-lead">NetPhantom is designed to be completely offline.</p>
+  <div class="privacy-grid">
+    <div class="privacy-card">
+      <strong>No telemetry</strong>
+      <span>No analytics, no crash reporting, no usage pings. Zero outbound traffic from the extension itself.</span>
+    </div>
+    <div class="privacy-card">
+      <strong>Offline geolocation</strong>
+      <span>Server IPs are resolved to countries using a bundled DB-IP Lite binary. No geo API calls are made.</span>
+    </div>
+    <div class="privacy-card">
+      <strong>Local-only data</strong>
+      <span>All captured request data stays in the panel's in-memory state and is cleared when you close DevTools.</span>
+    </div>
+    <div class="privacy-card">
+      <strong>Map topology</strong>
+      <span>Country outlines are fetched from jsDelivr (world-atlas TopoJSON) on first map open. This is the only outbound request NetPhantom makes.</span>
+    </div>
+  </div>
+</section>
+
+<!-- Permissions -->
+<section id="permissions">
+  <h2>Permissions explained</h2>
+  <p class="section-lead">NetPhantom requests the minimum permissions needed.</p>
+  <table>
+    <thead>
+      <tr><th>Permission</th><th>Why it's needed</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>webRequest</td><td>Cache real HTTP status codes before the DevTools event fires (fixes a Chrome bug where CORS-blocked requests report status 0).</td></tr>
+      <tr><td>tabs</td><td>Associate each DevTools panel with the correct inspected tab ID.</td></tr>
+      <tr><td>scripting</td><td>Inject the content script that wraps fetch / XHR / WebSocket.</td></tr>
+      <tr><td>declarativeNetRequest</td><td>Return mocked responses for requests matching a user-defined URL pattern.</td></tr>
+      <tr><td>storage</td><td>Persist mock rules so they survive a service worker restart.</td></tr>
+      <tr><td>&lt;all_urls&gt;</td><td>Capture requests to any origin — necessary for a network inspector.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- Attribution -->
+<section id="attribution" style="padding-bottom:2rem;">
+  <h2>Attribution</h2>
+  <p style="font-size:0.875rem; color:var(--text2); margin-top:0.5rem;">
+    IP geolocation data from <a href="https://db-ip.com">DB-IP Lite</a>
+    (<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>),
+    distributed via <a href="https://github.com/sapics/ip-location-db">ip-location-db</a>.<br>
+    Country boundary data from <a href="https://github.com/topojson/world-atlas">world-atlas</a>
+    (<a href="https://github.com/topojson/world-atlas/blob/master/LICENSE">BSD 3-Clause</a>).
+  </p>
+</section>
+
+<footer>
+  <p>NetPhantom &mdash; built with Canvas 2D, Chrome Extension MV3, and zero dependencies.</p>
+  <p style="margin-top:0.4rem;"><a href="https://github.com/forge-veil/netphantom">github.com/forge-veil/netphantom</a></p>
+</footer>
+
+</body>
+</html>

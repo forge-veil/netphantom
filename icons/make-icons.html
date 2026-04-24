@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<!-- Open this file in Chrome, then the icons will auto-download as PNGs -->
+<html>
+<head><title>NetPhantom Icon Generator</title></head>
+<body style="background:#090914;color:#dde4ff;font-family:monospace;padding:20px">
+<h3>Generating icons…</h3>
+<div id="log"></div>
+<script>
+function drawIcon(size) {
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  const s   = size / 20;
+
+  const bg = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size/2);
+  bg.addColorStop(0, '#1a1040');
+  bg.addColorStop(1, '#090914');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, size, size);
+
+  const nodes = [
+    { x:10, y:10, r:3.5, color:'#9f7aea' },
+    { x: 3, y: 5, r:2.2, color:'#00ff88' },
+    { x:17, y: 5, r:2.2, color:'#00ff88' },
+    { x: 3, y:15, r:2.2, color:'#00ccff' },
+    { x:17, y:15, r:2.2, color:'#ffbb00' },
+  ];
+
+  for (let i = 1; i < nodes.length; i++) {
+    ctx.beginPath();
+    ctx.moveTo(nodes[0].x*s, nodes[0].y*s);
+    ctx.lineTo(nodes[i].x*s, nodes[i].y*s);
+    ctx.strokeStyle = '#7c3aed80';
+    ctx.lineWidth = 1.4 * s;
+    ctx.stroke();
+  }
+
+  for (const n of nodes) {
+    const grd = ctx.createRadialGradient(n.x*s, n.y*s, 0, n.x*s, n.y*s, n.r*s*2.5);
+    grd.addColorStop(0, n.color + '70');
+    grd.addColorStop(1, 'transparent');
+    ctx.fillStyle = grd;
+    ctx.beginPath();
+    ctx.arc(n.x*s, n.y*s, n.r*s*2.5, 0, Math.PI*2);
+    ctx.fill();
+
+    ctx.fillStyle = n.color;
+    ctx.beginPath();
+    ctx.arc(n.x*s, n.y*s, n.r*s, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  return canvas.toDataURL('image/png');
+}
+
+const log = document.getElementById('log');
+[16, 48, 128].forEach(size => {
+  const dataUrl = drawIcon(size);
+  const a = document.createElement('a');
+  a.href = dataUrl;
+  a.download = `icon${size}.png`;
+  a.click();
+  log.innerHTML += `<div style="color:#00ff88">✓ icon${size}.png downloaded — move it to the icons/ folder</div>`;
+});
+</script>
+</body>
+</html>

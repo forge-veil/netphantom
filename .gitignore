@@ -1,0 +1,21 @@
+# Build output
+dist/
+
+# Local tooling
+.claude/
+
+# Generated — rebuild with: node tools/build-geoip.js
+devtools/panel/geoip-data.js
+
+# Node
+node_modules/
+npm-debug.log*
+
+# macOS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
