@@ -16,7 +16,6 @@ ZIP     := $(DIST)/netphantom-$(VERSION).zip
 PACK_INCLUDES := \
   manifest.json \
   background    \
-  content       \
   devtools      \
   icons         \
   popup
@@ -58,7 +57,6 @@ geoip:
 REQUIRED_FILES := \
   manifest.json \
   background/service-worker.js \
-  content/interceptor.js \
   devtools/devtools.html \
   devtools/devtools.js \
   devtools/panel/panel.html \

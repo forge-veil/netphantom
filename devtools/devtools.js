@@ -1,7 +1,6 @@
 // NetPhantom DevTools Page
 // Captures chrome.devtools.network events and forwards them to the service worker,
-// which relays to the panel. Never touches panelWindow directly — avoids the
-// cross-origin SecurityError that fires when the panel shows a chrome-error:// page.
+// which relays to the panel.
 
 const tabId = chrome.devtools.inspectedWindow.tabId;
 

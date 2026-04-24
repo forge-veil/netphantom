@@ -306,10 +306,6 @@
 
   function addRequest(req) {
     if (paused) return;
-    // DevTools onRequestFinished captures every request the content script sees,
-    // and with correct statuses. Keep content-script entries only for mocked
-    // requests (which never produce a devtools HAR entry).
-    if (req.source === 'content' && !req.mocked) return;
 
     // Detect whether this is the first request we've ever seen for this page.
     const inferringUrl = !currentPageUrl && req.url;

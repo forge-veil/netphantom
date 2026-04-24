@@ -54,7 +54,7 @@ Do not commit the generated file — CI builds it fresh from the DB-IP Lite sour
 
 - Keep PRs focused: one feature or fix per PR.
 - Run `make test` before opening a PR.
-- If you change the extension's permissions in `manifest.json`, explain why in the PR description.
+- If you add a permission to `manifest.json`, explain why in the PR description. NetPhantom intentionally requests no host permissions — keep it that way.
 - No new runtime dependencies — the extension ships with zero `node_modules`.
 
 ## Reporting bugs

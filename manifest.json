@@ -5,24 +5,11 @@
   "description": "Real-Time 3D Network Visualizer — See the Matrix of requests behind any site",
   "permissions": [
     "storage",
-    "tabs",
-    "scripting",
-    "webRequest",
-    "declarativeNetRequest",
-    "declarativeNetRequestWithHostAccess"
+    "tabs"
   ],
-  "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "background/service-worker.js"
   },
-  "content_scripts": [
-    {
-      "matches": ["<all_urls>"],
-      "js": ["content/interceptor.js"],
-      "run_at": "document_start",
-      "all_frames": false
-    }
-  ],
   "devtools_page": "devtools/devtools.html",
   "action": {
     "default_popup": "popup/popup.html",
@@ -32,11 +19,5 @@
       "48": "icons/icon48.png",
       "128": "icons/icon128.png"
     }
-  },
-  "web_accessible_resources": [
-    {
-      "resources": ["devtools/panel/*"],
-      "matches": ["<all_urls>"]
-    }
-  ]
+  }
 }

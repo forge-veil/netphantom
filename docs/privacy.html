@@ -80,13 +80,10 @@
 
   <h2>Permissions</h2>
   <ul>
-    <li><strong>webRequest</strong> — reads HTTP status codes to correct a Chrome bug; no request bodies are read.</li>
-    <li><strong>declarativeNetRequest</strong> — returns mock responses you define; only active when you create a mock rule.</li>
-    <li><strong>scripting</strong> — injects a content script that monitors fetch, XHR, and WebSocket activity in the inspected tab and reports metadata to the DevTools panel.</li>
-    <li><strong>storage</strong> — persists mock rules you create across sessions.</li>
+    <li><strong>storage</strong> — persists your DevTools panel preferences across sessions.</li>
     <li><strong>tabs</strong> — identifies which tab is being inspected so network events are routed to the correct panel.</li>
-    <li><strong>host_permissions (&lt;all_urls&gt;)</strong> — required to observe network traffic from any origin. No page content is read or transmitted.</li>
   </ul>
+  <p>NetPhantom requests no host permissions. All network data is captured through the Chrome DevTools Protocol (<code>chrome.devtools.network</code>), which provides access only to the tab currently open in DevTools and requires no broad host access.</p>
 
   <h2>Third-party services</h2>
   <p>NetPhantom does not integrate with any analytics, advertising, or data-broker services.</p>
